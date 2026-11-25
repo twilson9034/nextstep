@@ -196,6 +196,63 @@ export type Database = {
         }
         Relationships: []
       }
+      ns_tasks: {
+        Row: {
+          assignee_child: string | null
+          assignee_user: string | null
+          created_at: string
+          creator_id: string
+          done: boolean
+          due_date: string | null
+          household_id: string | null
+          id: string
+          priority: string
+          revision: number
+          title: string
+        }
+        Insert: {
+          assignee_child?: string | null
+          assignee_user?: string | null
+          created_at?: string
+          creator_id: string
+          done?: boolean
+          due_date?: string | null
+          household_id?: string | null
+          id: string
+          priority?: string
+          revision?: number
+          title: string
+        }
+        Update: {
+          assignee_child?: string | null
+          assignee_user?: string | null
+          created_at?: string
+          creator_id?: string
+          done?: boolean
+          due_date?: string | null
+          household_id?: string | null
+          id?: string
+          priority?: string
+          revision?: number
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ns_tasks_assignee_child_fkey"
+            columns: ["assignee_child"]
+            isOneToOne: false
+            referencedRelation: "ns_children"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ns_tasks_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "ns_households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
