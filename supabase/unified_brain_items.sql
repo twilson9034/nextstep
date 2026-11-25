@@ -1,0 +1,13 @@
+create table public.ns_brain_items(id uuid primary key default gen_random_uuid(),creator_id uuid not null default auth.uid() references auth.users(id) on delete cascade,household_id uuid references public.ns_households(id) on delete cascade,body text not null check(char_length(trim(body)) between 1 and 4000),done boolean not null default false,created_at timestamptz not null default now());
+create index on public.ns_brain_items(creator_id);
+create index on public.ns_brain_items(household_id);
+alter table public.ns_brain_items enable row level security;
+revoke all on public.ns_brain_items from public,anon,authenticated;
+grant select,insert on public.ns_brain_items to authenticated;
+grant update(household_id,body,done) on public.ns_brain_items to authenticated;
+create policy brain_read on public.ns_brain_items for select to authenticated using(creator_id=(select auth.uid()) or exists(select 1 from public.ns_households h where h.id=ns_brain_items.household_id));
+create policy brain_insert on public.ns_brain_items for insert to authenticated with check(creator_id=(select auth.uid()) and (household_id is null or exists(select 1 from public.ns_households h where h.id=ns_brain_items.household_id)));
+create policy brain_update on public.ns_brain_items for update to authenticated using(creator_id=(select auth.uid())) with check(creator_id=(select auth.uid()) and (household_id is null or exists(select 1 from public.ns_households h where h.id=ns_brain_items.household_id)));
+create function ns_private.revoke_removed_member_invites() returns trigger language plpgsql security definer set search_path='' as $$ begin if auth.uid() is not null and (auth.uid()=old.user_id or ns_private.owns_household(old.household_id)) then update public.ns_invites set revoked=true where household_id=old.household_id and email=(select lower(email) from auth.users where id=old.user_id); end if; return old; end $$;
+revoke all on function ns_private.revoke_removed_member_invites() from public,anon,authenticated;
+create trigger ns_revoke_removed_member after delete on public.ns_memberships for each row execute function ns_private.revoke_removed_member_invites();
