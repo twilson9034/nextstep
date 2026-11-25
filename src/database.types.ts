@@ -29,6 +29,64 @@ export type Database = {
         }
         Relationships: []
       }
+      ns_invites: {
+        Row: {
+          email: string
+          expires_at: string
+          household_id: string
+          id: string
+          revoked: boolean
+        }
+        Insert: {
+          email: string
+          expires_at?: string
+          household_id: string
+          id?: string
+          revoked?: boolean
+        }
+        Update: {
+          email?: string
+          expires_at?: string
+          household_id?: string
+          id?: string
+          revoked?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ns_invites_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "ns_households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ns_memberships: {
+        Row: {
+          household_id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          household_id: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          household_id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ns_memberships_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "ns_households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ns_profiles: {
         Row: {
           display_name: string
