@@ -19,3 +19,5 @@
 header{margin-top:max(8px,env(safe-area-inset-top))}
 
 main details{border:1px solid var(--border);border-radius:8px;background:var(--surface);margin:10px 0;padding:12px}main summary{cursor:pointer;font-weight:600;min-height:44px;align-content:center}main details section{margin:4px 0;border:0;padding:8px 0}.password-row{display:flex;gap:8px}.password-row input{flex:1;min-width:0}.setup-card button{margin:4px}.setup-card .row button{min-width:90px}
+
+.task-meta{display:block;color:var(--muted);font-size:.78rem}.task-details{display:grid;gap:8px;margin:8px 0}.task-details label{min-width:0}.brain-item>span:last-child{flex:0 0 auto}
