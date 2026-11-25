@@ -1,0 +1,13 @@
+create table public.ns_tasks(id uuid primary key,creator_id uuid not null references auth.users(id) on delete cascade,household_id uuid references public.ns_households(id) on delete cascade,title text not null check(length(trim(title)) between 1 and 500),priority text not null default 'normal' check(priority in ('low','normal','high')),due_date date,assignee_user uuid references auth.users(id) on delete set null,assignee_child uuid references public.ns_children(id) on delete set null,done boolean not null default false,revision integer not null default 0 check(revision>=0),created_at timestamptz not null default now(),check(assignee_user is null or assignee_child is null),check(household_id is not null or (assignee_child is null and (assignee_user is null or assignee_user=creator_id))));
+create index on public.ns_tasks(creator_id);
+create index on public.ns_tasks(household_id);
+alter table public.ns_tasks enable row level security;
+revoke all on public.ns_tasks from public,anon,authenticated;
+grant select,insert on public.ns_tasks to authenticated;
+grant update(title,priority,due_date,household_id,assignee_user,assignee_child,done,revision) on public.ns_tasks to authenticated;
+create function ns_private.valid_task_assignment(h uuid,u uuid,c uuid) returns boolean language sql stable security definer set search_path='' as $$ select auth.uid() is not null and (case when h is null then c is null and (u is null or u=auth.uid()) else exists(select 1 from public.ns_households x where x.id=h and (x.owner_id=auth.uid() or exists(select 1 from public.ns_memberships m where m.household_id=h and m.user_id=auth.uid()))) and (u is null or exists(select 1 from public.ns_households x where x.id=h and x.owner_id=u) or exists(select 1 from public.ns_memberships m where m.household_id=h and m.user_id=u)) and (c is null or exists(select 1 from public.ns_children x where x.id=c and x.household_id=h and not x.archived)) end) $$;
+revoke all on function ns_private.valid_task_assignment(uuid,uuid,uuid) from public,anon;
+grant execute on function ns_private.valid_task_assignment(uuid,uuid,uuid) to authenticated;
+create policy task_read on public.ns_tasks for select to authenticated using(creator_id=(select auth.uid()) or exists(select 1 from public.ns_households h where h.id=ns_tasks.household_id));
+create policy task_insert on public.ns_tasks for insert to authenticated with check(creator_id=(select auth.uid()) and ns_private.valid_task_assignment(household_id,assignee_user,assignee_child));
+create policy task_update on public.ns_tasks for update to authenticated using(creator_id=(select auth.uid())) with check(creator_id=(select auth.uid()) and ns_private.valid_task_assignment(household_id,assignee_user,assignee_child));
