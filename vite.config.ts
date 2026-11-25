@@ -1,1 +1,1 @@
-import {defineConfig} from 'vite'; export default defineConfig({base:'./'});
+import {defineConfig} from 'vite'; export default defineConfig({base:'/nextstep/',build:{target:'es2020'}});
