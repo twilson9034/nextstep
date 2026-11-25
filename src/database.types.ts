@@ -11,6 +11,38 @@ export type Database = {
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   public: {
     Tables: {
+      ns_children: {
+        Row: {
+          age_group: string
+          archived: boolean
+          display_name: string
+          household_id: string
+          id: string
+        }
+        Insert: {
+          age_group?: string
+          archived?: boolean
+          display_name: string
+          household_id: string
+          id?: string
+        }
+        Update: {
+          age_group?: string
+          archived?: boolean
+          display_name?: string
+          household_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ns_children_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "ns_households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ns_households: {
         Row: {
           id: string
