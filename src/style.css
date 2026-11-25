@@ -21,3 +21,6 @@ header{margin-top:max(8px,env(safe-area-inset-top))}
 main details{border:1px solid var(--border);border-radius:8px;background:var(--surface);margin:10px 0;padding:12px}main summary{cursor:pointer;font-weight:600;min-height:44px;align-content:center}main details section{margin:4px 0;border:0;padding:8px 0}.password-row{display:flex;gap:8px}.password-row input{flex:1;min-width:0}.setup-card button{margin:4px}.setup-card .row button{min-width:90px}
 
 .task-meta{display:block;color:var(--muted);font-size:.78rem}.task-details{display:grid;gap:8px;margin:8px 0}.task-details label{min-width:0}.brain-item>span:last-child{flex:0 0 auto}
+
+/* Keep icon geometry independent of button and text sizing. */
+.brain-compact .brain-icon svg,.brain-item>span:last-child svg{display:block;width:20px;height:20px;flex:none;max-width:100%;max-height:100%}.brain-toolbar{gap:4px;flex-wrap:wrap}.brain-filters{flex-wrap:wrap;min-width:0}.brain-toolbar>button.brain-icon{margin-left:auto}.brain-compact button.brain-icon{min-width:44px;min-height:44px;line-height:1;overflow:hidden}.brain-item>span:last-child{display:flex;align-items:center;justify-content:center}
