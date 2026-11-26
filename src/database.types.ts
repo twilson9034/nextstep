@@ -48,15 +48,15 @@ export type Database = {
       }
       ns_children: {
         Row: {
-          may_edit_setup: boolean
-          linked_user: string | null
-          invite_email: string | null
-          invite_expires: string | null
           age_group: string
           archived: boolean
           display_name: string
           household_id: string
           id: string
+          invite_email: string | null
+          invite_expires: string | null
+          linked_user: string | null
+          may_edit_setup: boolean
         }
         Insert: {
           age_group?: string
@@ -64,14 +64,21 @@ export type Database = {
           display_name: string
           household_id: string
           id?: string
+          invite_email?: string | null
+          invite_expires?: string | null
+          linked_user?: string | null
+          may_edit_setup?: boolean
         }
         Update: {
-          may_edit_setup?: boolean
           age_group?: string
           archived?: boolean
           display_name?: string
           household_id?: string
           id?: string
+          invite_email?: string | null
+          invite_expires?: string | null
+          linked_user?: string | null
+          may_edit_setup?: boolean
         }
         Relationships: [
           {
@@ -290,26 +297,57 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      ns_parent_child_setup: { Args:{profile:string; changes?:Json; expected_revision?:number}; Returns:Json }
-      ns_manage_device: { Args: { profile_id:string; action:string; label?:string; pin?:string; device_id?:string }; Returns:Json }
-      ns_pair_device: { Args:{code:string}; Returns:string }
-      ns_device_workspace: { Args:{token:string; changes?:Json; expected_revision?:number}; Returns:Json }
-      ns_leave_device: { Args:{token:string;pin:string}; Returns:boolean }
+      ns_accept_child_invite: { Args: { profile: string }; Returns: undefined }
       ns_child_connections: {
-        Args: Record<PropertyKey, never>
-        Returns: { profile: string; child_name: string; household_name: string; linked: boolean; archived: boolean }[]
+        Args: never
+        Returns: {
+          archived: boolean
+          child_name: string
+          household_name: string
+          linked: boolean
+          profile: string
+        }[]
       }
       ns_child_invite: {
-        Args: { profile: string; address: string | null }
+        Args: { address: string; profile: string }
         Returns: undefined
       }
-      ns_accept_child_invite: {
-        Args: { profile: string }
-        Returns: undefined
+      ns_child_workspace: {
+        Args: {
+          changes?: Json
+          expected_revision?: number
+          task_id?: string
+          task_revision?: number
+          token?: string
+        }
+        Returns: Json
+      }
+      ns_device_workspace: {
+        Args: { changes?: Json; expected_revision?: number; token: string }
+        Returns: Json
+      }
+      ns_leave_device: {
+        Args: { pin: string; token: string }
+        Returns: boolean
+      }
+      ns_manage_device: {
+        Args: {
+          action: string
+          device_id?: string
+          label?: string
+          pin?: string
+          profile_id: string
+        }
+        Returns: Json
       }
       ns_manage_household: {
         Args: { action: string; h: string; value: string }
         Returns: undefined
+      }
+      ns_pair_device: { Args: { code: string }; Returns: string }
+      ns_parent_child_setup: {
+        Args: { changes?: Json; expected_revision?: number; profile: string }
+        Returns: Json
       }
     }
     Enums: {
