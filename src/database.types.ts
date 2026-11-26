@@ -204,6 +204,7 @@ export type Database = {
           creator_id: string
           done: boolean
           due_date: string | null
+          effort: string | null
           household_id: string | null
           id: string
           priority: string
@@ -217,6 +218,7 @@ export type Database = {
           creator_id: string
           done?: boolean
           due_date?: string | null
+          effort?: string | null
           household_id?: string | null
           id: string
           priority?: string
@@ -230,6 +232,7 @@ export type Database = {
           creator_id?: string
           done?: boolean
           due_date?: string | null
+          effort?: string | null
           household_id?: string | null
           id?: string
           priority?: string
