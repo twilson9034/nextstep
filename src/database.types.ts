@@ -202,6 +202,7 @@ export type Database = {
           assignee_user: string | null
           created_at: string
           creator_id: string
+          definition_of_done: string
           done: boolean
           due_date: string | null
           effort: string | null
@@ -209,6 +210,7 @@ export type Database = {
           id: string
           priority: string
           revision: number
+          subtasks: Json
           title: string
         }
         Insert: {
@@ -216,6 +218,7 @@ export type Database = {
           assignee_user?: string | null
           created_at?: string
           creator_id: string
+          definition_of_done?: string
           done?: boolean
           due_date?: string | null
           effort?: string | null
@@ -223,6 +226,7 @@ export type Database = {
           id: string
           priority?: string
           revision?: number
+          subtasks?: Json
           title: string
         }
         Update: {
@@ -230,6 +234,7 @@ export type Database = {
           assignee_user?: string | null
           created_at?: string
           creator_id?: string
+          definition_of_done?: string
           done?: boolean
           due_date?: string | null
           effort?: string | null
@@ -237,6 +242,7 @@ export type Database = {
           id?: string
           priority?: string
           revision?: number
+          subtasks?: Json
           title?: string
         }
         Relationships: [
