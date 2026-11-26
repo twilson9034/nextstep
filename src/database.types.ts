@@ -48,6 +48,7 @@ export type Database = {
       }
       ns_children: {
         Row: {
+          may_edit_setup: boolean
           linked_user: string | null
           invite_email: string | null
           invite_expires: string | null
@@ -65,6 +66,7 @@ export type Database = {
           id?: string
         }
         Update: {
+          may_edit_setup?: boolean
           age_group?: string
           archived?: boolean
           display_name?: string
@@ -288,6 +290,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      ns_parent_child_setup: { Args:{profile:string; changes?:Json; expected_revision?:number}; Returns:Json }
       ns_manage_device: { Args: { profile_id:string; action:string; label?:string; pin?:string; device_id?:string }; Returns:Json }
       ns_pair_device: { Args:{code:string}; Returns:string }
       ns_device_workspace: { Args:{token:string; changes?:Json; expected_revision?:number}; Returns:Json }

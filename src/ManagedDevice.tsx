@@ -6,7 +6,7 @@ import {defaults, Personalization, type Preferences} from './Personalization';
 type Client = SupabaseClient<Database>;
 type Device = {id:string; label:string; paired:boolean};
 type Setup = Preferences & {modules?:string[]};
-type Snapshot = {name:string; preferences:Partial<Setup>; revision:number; tasks:{id:string;title:string;done:boolean}[]};
+type Snapshot = {may_edit_setup:boolean;name:string; preferences:Partial<Setup>; revision:number; tasks:{id:string;title:string;done:boolean}[]};
 export const deviceKey = 'nextstep:managed-device';
 const modules = ['Tasks'];
 
@@ -29,7 +29,7 @@ export function PairDevice({client}:{client:Client}) {
     </form></details>;
 }
 
-export function ManageDevices({client,profile}:{client:Client;profile:string}) {
+export function ManageDevices({client,profile,listOnly=false}:{client:Client;profile:string;listOnly?:boolean}) {
   const [devices,setDevices]=useState<Device[]>([]),[label,setLabel]=useState(''),[pin,setPin]=useState('');
   const [code,setCode]=useState(''),[status,setStatus]=useState(''),[busy,setBusy]=useState(false);
   const list=useCallback(async()=>{
@@ -41,8 +41,8 @@ export function ManageDevices({client,profile}:{client:Client;profile:string}) {
     setBusy(true);setStatus('');
     try {await work()} catch(error){setStatus((error as Error).message)} finally {setBusy(false)}
   }
-  return <details onToggle={e=>{if(e.currentTarget.open)void run(list)}}><summary>Set up child access without email</summary>
-    <form onSubmit={e=>{e.preventDefault();void run(async()=>{
+  return <details open={listOnly||undefined} onToggle={e=>{if(e.currentTarget.open)void run(list)}}><summary>{listOnly?'Device list':'Set up child access without email'}</summary>
+    {!listOnly&&<form onSubmit={e=>{e.preventDefault();void run(async()=>{
       const {data,error}=await client.rpc('ns_manage_device',{profile_id:profile,action:'issue',label,pin});
       if(error)throw new Error(error.message);
       setCode(data as string);setPin('');await list();
@@ -51,7 +51,8 @@ export function ManageDevices({client,profile}:{client:Client;profile:string}) {
       <label>Parent PIN for this device<input required type="password" inputMode="numeric" pattern="[0-9]{6}" maxLength={6} value={pin} onChange={e=>setPin(e.target.value)}/></label>
       <small>Use six digits. The PIN lets you leave child mode on this device.</small>
       <button disabled={busy}>Create device code</button>
-    </form>
+    </form>}
+    {listOnly&&!devices.length&&!busy&&<p>No devices listed.</p>}
     {code&&<section><p>On the child’s device, open NextStep while signed out and select <strong>Use a child device code</strong>. This code works once and expires in 15 minutes.</p>
       <p><code>{code.match(/.{4}/g)?.join('-')}</code></p>
       <button disabled={busy} onClick={()=>{if(confirm('Sign out of your account on this device and open the child workspace?'))void run(async()=>{
@@ -98,7 +99,7 @@ export function DeviceWorkspace({client,token}:{client:Client;token:string}) {
   const value={...defaults(),...snapshot?.preferences,...draft};
   return <main><h1>{snapshot?.name || 'Child workspace'}</h1>
     {snapshot&&<>{(value.modules??modules).includes('Tasks')&&<section><h2>My assigned tasks</h2>{snapshot.tasks.length?snapshot.tasks.map(t=><p key={t.id}>{t.title}{t.done?' · Completed':''}</p>):<p>No assigned tasks.</p>}</section>}
-      <fieldset disabled={busy}><Personalization value={value} change={change} modules={modules} enabled={value.modules??modules} setEnabled={modules=>change({modules})} section={section||undefined}/>
+      {snapshot.may_edit_setup===false&&<p>Your parent manages your personalization.</p>}<fieldset disabled={busy||snapshot.may_edit_setup===false}><Personalization value={value} change={change} modules={modules} enabled={value.modules??modules} setEnabled={modules=>change({modules})} section={section||undefined}/>
       {['My Brain Style','My Strengths','Decision-Making Support','My Assistance'].map(s=><button key={s} onClick={()=>setSection(s)}>{s}</button>)}
       <button onClick={()=>setSection('')}>Return to setup</button>
       <button disabled={base===null} onClick={()=>void save()}>Save progress</button>

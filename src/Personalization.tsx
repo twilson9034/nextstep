@@ -14,16 +14,20 @@ const decisions=['Give me a practical default so I can get started','Give me two
 export type Preferences={step:number,name:string,family:boolean,styles:string[],behaviors:Record<string,boolean>,answers:Record<string,string>,strengths:string[],decisions:string[],assistance:string,overrides:Record<string,string>};
 export const defaults=(assistance='Guided'):Preferences=>({step:0,name:'',family:false,styles:[],behaviors:{},answers:{},strengths:[],decisions:[],assistance,overrides:{}});
 type Stored={value:Preferences,revision:number|null,pending:boolean};
-export function usePersonalization(client:SupabaseClient<Database>|null,userId:string|null,assistance:string){
+export function usePersonalization(client:SupabaseClient<Database>|null,userId:string|null,assistance:string,canEdit=true){
 const key='nextstep:'+(userId?'account:'+userId+':':'')+'personalization-v1';
 const [store,setStore]=useState<Stored>(()=>{try{return JSON.parse(localStorage.getItem(key)||'null')||{value:defaults(assistance),revision:null,pending:false}}catch{return {value:defaults(assistance),revision:null,pending:false}}});
 const latest=useRef(store),running=useRef(false),alive=useRef(true);
 const [status,setStatus]=useState('Saved on device'),[conflict,setConflict]=useState<Stored|null>(null);
 function persist(s:Stored){localStorage.setItem(key,JSON.stringify(s));latest.current=s;if(alive.current)setStore(s)}
-function change(p:Partial<Preferences>){try{persist({...latest.current,value:{...latest.current.value,...p},pending:!!userId});setStatus(userId?'Changes pending':'Saved on device')}catch{setStatus('Device storage unavailable')}}
+function change(p:Partial<Preferences>){if(!canEdit)return;try{persist({...latest.current,value:{...latest.current.value,...p},pending:!!userId});setStatus(userId?'Changes pending':'Saved on device')}catch{setStatus('Device storage unavailable')}}
 async function sync(){if(!client||!userId||!navigator.onLine||running.current)return;running.current=true;try{
 const r=await client.from('ns_personalization').select('*').eq('user_id',userId).maybeSingle();if(!alive.current)return;if(r.error)throw r.error;
 const s=latest.current;const remote=r.data?{value:{...defaults(),...(r.data.preferences as unknown as Preferences)},revision:r.data.revision,pending:false}:null;
+if(!canEdit){
+  if(s.pending)localStorage.setItem(key+':backup',JSON.stringify(s));
+  persist(remote??{value:defaults(assistance),revision:null,pending:false});setConflict(null);setStatus('Managed by parent');return
+}
 if(!s.pending){if(remote)persist(remote);setStatus(remote?'Synced':'Saved on device');return}
 if((remote?.revision??null)!==s.revision){setConflict(remote);setStatus('Cloud conflict — local changes retained');return}
 const payload={user_id:userId,preferences:s.value as unknown as Json,revision:(s.revision??-1)+1};
@@ -31,12 +35,13 @@ const w=s.revision===null?await client.from('ns_personalization').insert(payload
 if(!alive.current)return;if(w.error||!w.data?.length)throw w.error||new Error('Concurrent change; retry');
 persist({...latest.current,revision:payload.revision,pending:latest.current.value!==s.value});setConflict(null);setStatus(latest.current.pending?'Changes pending':'Synced');
 }catch{if(alive.current)setStatus('Sync unavailable — device copy retained')}finally{running.current=false}}
-useEffect(()=>{alive.current=true;void sync();const timer=setInterval(()=>void sync(),5000);const online=()=>void sync();window.addEventListener('online',online);return()=>{alive.current=false;clearInterval(timer);window.removeEventListener('online',online)}},[key]);
+useEffect(()=>{alive.current=true;void sync();const timer=setInterval(()=>void sync(),5000);const online=()=>void sync();window.addEventListener('online',online);return()=>{alive.current=false;clearInterval(timer);window.removeEventListener('online',online)}},[key,canEdit]);
 return {value:store.value,change,status,conflict,resolve:(cloud:boolean)=>{if(!conflict)return;try{localStorage.setItem(key+':backup',JSON.stringify(cloud?latest.current:conflict));persist(cloud?conflict:{...latest.current,revision:conflict.revision,pending:true});setConflict(null);void sync()}catch{setStatus('Unable to preserve backup')}}};
 }
-type Props={value:Preferences,change:(p:Partial<Preferences>)=>void,modules:string[],enabled:string[],setEnabled:(v:string[])=>void,section?:string,onFamily?:()=>void};
+type Props={readOnly?:boolean,value:Preferences,change:(p:Partial<Preferences>)=>void,modules:string[],enabled:string[],setEnabled:(v:string[])=>void,section?:string,onFamily?:()=>void};
 function toggle(list:string[],v:string){return list.includes(v)?list.filter(x=>x!==v):[...list,v]}
-export function Personalization({value:p,change,modules,enabled,setEnabled,section,onFamily}:Props){
+export function Personalization(props:Props){return props.readOnly?<><p>Your parent manages your personalization.</p><fieldset disabled><PersonalizationEditor {...props}/></fieldset></>:<PersonalizationEditor {...props}/>}
+function PersonalizationEditor({value:p,change,modules,enabled,setEnabled,section,onFamily}:Props){
 const [quiz,setQuiz]=useState(-1),[strength,setStrength]=useState(-1);
 const step=Math.max(0,Math.min(6,p.step));const titles=['Your mind. Your pace.','Personal or family','My Brain Style','Personalize support','My Modules','My Assistance','Review and finish'];
 function selectStyle(v:string){const next=toggle(p.styles,v);const behaviors={...p.behaviors};const row=styles.find(s=>s[0]===v);row?.slice(4).forEach(b=>{behaviors[b]=next.includes(v)});change({styles:next,behaviors})}
