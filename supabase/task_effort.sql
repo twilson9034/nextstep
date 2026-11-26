@@ -1,0 +1,1 @@
+alter table public.ns_tasks add column effort text check(effort in ('light','moderate','demanding')); grant update(effort) on public.ns_tasks to authenticated;
