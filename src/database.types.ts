@@ -309,7 +309,7 @@ export type Database = {
         }[]
       }
       ns_child_invite: {
-        Args: { address: string; profile: string }
+        Args: { address: string | null; profile: string }
         Returns: undefined
       }
       ns_child_workspace: {

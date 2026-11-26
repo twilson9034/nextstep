@@ -25,7 +25,7 @@ export function ChildSettings({client,child,refresh,back}:{client:SupabaseClient
   const [status,setStatus]=useState(''),[busy,setBusy]=useState(false);
   async function load(){
     const result=await client.rpc('ns_parent_child_setup',{profile:child.id});
-    if(result.error){setStatus(result.error.message);return}
+    if(result.error){setSnapshot(null);setStatus(result.error.message);return}
     setSnapshot(result.data as unknown as Snapshot);setDraft({});
   }
   useEffect(()=>{void load()},[client,child.id]);
