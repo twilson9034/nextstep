@@ -288,6 +288,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      ns_manage_device: { Args: { profile_id:string; action:string; label?:string; pin?:string; device_id?:string }; Returns:Json }
+      ns_pair_device: { Args:{code:string}; Returns:string }
+      ns_device_workspace: { Args:{token:string; changes?:Json; expected_revision?:number}; Returns:Json }
+      ns_leave_device: { Args:{token:string;pin:string}; Returns:boolean }
       ns_child_connections: {
         Args: Record<PropertyKey, never>
         Returns: { profile: string; child_name: string; household_name: string; linked: boolean; archived: boolean }[]

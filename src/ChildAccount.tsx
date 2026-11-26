@@ -53,7 +53,7 @@ export function ChildConnection({ client, connections, refresh }: { client: Clie
   }
   return <>{connections.map(c => <section key={c.profile}><h2>{c.linked ? 'My household' : 'Child account invitation'}</h2>
     <p>{c.child_name} · {c.household_name}{c.archived ? ' · Profile archived' : ''}</p>
-    {!c.linked && <><p>Link this sign-in to your child profile? Your setup and support preferences stay private to your account.</p>
+    {!c.linked && <><p>Link this sign-in to your child profile? If your parent already paired a device, its saved child settings will carry over and take priority where settings overlap.</p>
       <button disabled={busy} onClick={() => void accept(c.profile)}>Link my account</button></>}
   </section>)}{status && <p role="status">{status}</p>}</>;
 }
