@@ -48,6 +48,9 @@ export type Database = {
       }
       ns_children: {
         Row: {
+          linked_user: string | null
+          invite_email: string | null
+          invite_expires: string | null
           age_group: string
           archived: boolean
           display_name: string
@@ -285,6 +288,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      ns_child_connections: {
+        Args: Record<PropertyKey, never>
+        Returns: { profile: string; child_name: string; household_name: string; linked: boolean; archived: boolean }[]
+      }
+      ns_child_invite: {
+        Args: { profile: string; address: string | null }
+        Returns: undefined
+      }
+      ns_accept_child_invite: {
+        Args: { profile: string }
+        Returns: undefined
+      }
       ns_manage_household: {
         Args: { action: string; h: string; value: string }
         Returns: undefined
