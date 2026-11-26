@@ -6,7 +6,7 @@ import {defaults, Personalization, type Preferences} from './Personalization';
 type Client = SupabaseClient<Database>;
 type Device = {id:string; label:string; paired:boolean};
 type Setup = Preferences & {modules?:string[]};
-type Snapshot = {may_edit_setup:boolean;name:string; preferences:Partial<Setup>; revision:number; tasks:{id:string;title:string;done:boolean}[]};
+type Snapshot = {may_edit_setup:boolean;name:string; preferences:Partial<Setup>; revision:number; tasks:{id:string;title:string;done:boolean;revision:number;definition_of_done:string;subtasks:unknown}[]};
 export const deviceKey = 'nextstep:managed-device';
 const modules = ['Tasks'];
 
@@ -29,7 +29,7 @@ export function PairDevice({client}:{client:Client}) {
     </form></details>;
 }
 
-export function ManageDevices({client,profile,listOnly=false}:{client:Client;profile:string;listOnly?:boolean}) {
+export function ManageDevices({client,profile,listOnly=false,expanded=false}:{client:Client;profile:string;listOnly?:boolean;expanded?:boolean}) {
   const [devices,setDevices]=useState<Device[]>([]),[label,setLabel]=useState(''),[pin,setPin]=useState('');
   const [code,setCode]=useState(''),[status,setStatus]=useState(''),[busy,setBusy]=useState(false);
   const list=useCallback(async()=>{
@@ -41,7 +41,7 @@ export function ManageDevices({client,profile,listOnly=false}:{client:Client;pro
     setBusy(true);setStatus('');
     try {await work()} catch(error){setStatus((error as Error).message)} finally {setBusy(false)}
   }
-  return <details open={listOnly||undefined} onToggle={e=>{if(e.currentTarget.open)void run(list)}}><summary>{listOnly?'Device list':'Set up child access without email'}</summary>
+  return <details open={listOnly||expanded||undefined} onToggle={e=>{if(e.currentTarget.open)void run(list)}}><summary>{listOnly?'Device list':'Set up child access without email'}</summary>
     {!listOnly&&<form onSubmit={e=>{e.preventDefault();void run(async()=>{
       const {data,error}=await client.rpc('ns_manage_device',{profile_id:profile,action:'issue',label,pin});
       if(error)throw new Error(error.message);
@@ -67,49 +67,29 @@ export function ManageDevices({client,profile,listOnly=false}:{client:Client;pro
   </details>;
 }
 
-export function DeviceWorkspace({client,token}:{client:Client;token:string}) {
-  const [snapshot,setSnapshot]=useState<Snapshot|null>(null),[draft,setDraft]=useState<Partial<Setup>>({});
-  const [busy,setBusy]=useState(false),[status,setStatus]=useState(''),[pin,setPin]=useState(''),[ended,setEnded]=useState(false);
-  const [section,setSection]=useState('');
-  function exit(){localStorage.removeItem(deviceKey);location.reload()}
-  const load=useCallback(async()=>{
-    const {data,error}=await client.rpc('ns_device_workspace',{token});
-    if(error){if(error.code==='42501'){setEnded(true);setSnapshot(null)}setStatus(error.message);return}
-    setSnapshot(data as unknown as Snapshot);
-  },[client,token]);
-  useEffect(()=>{void load();const timer=setInterval(()=>void load(),15000);window.addEventListener('focus',load);
-    return ()=>{clearInterval(timer);window.removeEventListener('focus',load)}},[load]);
-  const [base,setBase]=useState<number|null>(null);
-  const saving=useRef(false);
-  async function save(){
-    if(base===null || saving.current)return;
-    saving.current=true;
-    setBusy(true);
-    const {data,error}=await client.rpc('ns_device_workspace',{token,changes:draft as Json,expected_revision:base});
-    if(error){setStatus(error.message);if(error.code==='42501'){setEnded(true);setSnapshot(null)}}
-    else{setSnapshot(data as unknown as Snapshot);setDraft({});setBase(null);setStatus('Progress saved')}
-    saving.current=false;setBusy(false);
-  }
-  useEffect(()=>{
-    if(base===null || busy || !snapshot || snapshot.revision!==base)return;
-    const timer=setTimeout(()=>void save(),900);
-    return ()=>clearTimeout(timer);
-  },[draft,base]);
-  function change(p:Partial<Setup>){if(!snapshot)return;setBase(old=>old??snapshot.revision);setDraft(old=>({...old,...p}));setStatus('Changes ready to save')}
-  const value={...defaults(),...snapshot?.preferences,...draft};
-  return <main><h1>{snapshot?.name || 'Child workspace'}</h1>
-    {snapshot&&<>{(value.modules??modules).includes('Tasks')&&<section><h2>My assigned tasks</h2>{snapshot.tasks.length?snapshot.tasks.map(t=><p key={t.id}>{t.title}{t.done?' · Completed':''}</p>):<p>No assigned tasks.</p>}</section>}
-      {snapshot.may_edit_setup===false&&<p>Your parent manages your personalization.</p>}<fieldset disabled={busy||snapshot.may_edit_setup===false}><Personalization value={value} change={change} modules={modules} enabled={value.modules??modules} setEnabled={modules=>change({modules})} section={section||undefined}/>
-      {['My Brain Style','My Strengths','Decision-Making Support','My Assistance'].map(s=><button key={s} onClick={()=>setSection(s)}>{s}</button>)}
-      <button onClick={()=>setSection('')}>Return to setup</button>
-      <button disabled={base===null} onClick={()=>void save()}>Save progress</button>
-      {base!==null&&snapshot.revision!==base&&<button onClick={()=>{setDraft({});setBase(null);setStatus('Loaded latest settings')}}>Discard my edits and load latest settings</button>}
-      </fieldset></>}
-    <p role="status">{status}</p>
-    {ended?<button onClick={exit}>Return to sign-in</button>:<details><summary>Parent controls</summary>
-      <form onSubmit={async e=>{e.preventDefault();const {data,error}=await client.rpc('ns_leave_device',{token,pin});
-        if(data===true)exit();else setStatus(error?.message||'PIN unavailable. Check the PIN and try again later.');setPin('')}}>
-        <label>Parent PIN<input type="password" required pattern="[0-9]{6}" inputMode="numeric" value={pin} onChange={e=>setPin(e.target.value)}/></label>
-        <button>Disconnect and return to sign-in</button></form></details>}
-  </main>;
+export function DeviceWorkspace({client,token,onSignOut}:{client:Client;token?:string;onSignOut?:()=>void}) {
+ const [snapshot,setSnapshot]=useState<Snapshot|null>(null),[draft,setDraft]=useState<Partial<Setup>>({}),[base,setBase]=useState<number|null>(null);
+ const [busy,setBusy]=useState(false),[status,setStatus]=useState(''),[pin,setPin]=useState(''),[ended,setEnded]=useState(false),[section,setSection]=useState('');
+ const pending=useRef(false),sequence=useRef(0);
+ const args=token?{token}:{};
+ function exit(){localStorage.removeItem(deviceKey);location.reload()}
+ const load=useCallback(async()=>{if(pending.current)return;const seq=++sequence.current;try{
+  const {data,error}=await client.rpc('ns_child_workspace',token?{token}:{});
+  if(seq!==sequence.current)return;
+  if(error){setSnapshot(null);setStatus(error.message);if(error.code==='42501')setEnded(true);return}
+  setSnapshot(data as unknown as Snapshot);setEnded(false);
+ }catch{setSnapshot(null);setStatus('Connect to the internet to use your child workspace.')}},[client,token]);
+ useEffect(()=>{void load();const timer=setInterval(()=>void load(),10000);const offline=()=>{sequence.current++;setSnapshot(null);setStatus('Child workspace requires an internet connection.')};window.addEventListener('offline',offline);window.addEventListener('online',load);window.addEventListener('focus',load);return()=>{sequence.current++;clearInterval(timer);window.removeEventListener('offline',offline);window.removeEventListener('online',load);window.removeEventListener('focus',load)}},[load]);
+ function change(p:Partial<Setup>){if(!snapshot?.may_edit_setup)return;setBase(old=>old??snapshot.revision);setDraft(old=>({...old,...p}));setStatus('Unsaved changes')}
+ async function write(extra:{changes?:Json;expected_revision?:number;task_id?:string;task_revision?:number},saved:string){if(pending.current)return;pending.current=true;sequence.current++;setBusy(true);try{
+   const {data,error}=await client.rpc('ns_child_workspace',{...args,...extra});if(error)throw error;
+   setSnapshot(data as unknown as Snapshot);if(extra.changes){setDraft({});setBase(null)}setStatus(saved);
+ }catch(e){setStatus((e as Error).message||'Unable to save');if((e as {code?:string}).code==='42501'){setSnapshot(null);void load()}}finally{pending.current=false;setBusy(false)}}
+ function navigate(next:string){if(base!==null&&!confirm('Discard unsaved changes?'))return;setDraft({});setBase(null);setSection(next);setStatus('')}
+ const value={...defaults(),...snapshot?.preferences,...draft};
+ return <><header><strong>Next<span>Step</span></strong><small>Child workspace</small></header><main className="child-settings"><h1>{snapshot?.name||'Child workspace'}</h1>
+ {snapshot&&<>{!section?<><section><h2>My assigned tasks</h2>{(value.modules??modules).includes('Tasks')?(snapshot.tasks.length?snapshot.tasks.map(t=><div className="child-task" key={t.id}><strong>{t.title}</strong>{t.definition_of_done&&<small>Good enough when: {t.definition_of_done}</small>}{t.done?<small>✓ Completed</small>:<button disabled={busy} onClick={()=>{if((t.definition_of_done||Array.isArray(t.subtasks)&&t.subtasks.some((s:{done?:boolean})=>!s.done))&&!confirm('Have you finished the required steps and outcome?'))return;void write({task_id:t.id,task_revision:t.revision},'Task completed')}}>Complete task</button>}</div>):<p>No assigned tasks yet.</p>):<p>Your parent has turned off Tasks.</p>}</section><section><h2>My support</h2><div className="child-settings-menu">{['My Brain Style','My Strengths','Decision-Making Support','My Assistance'].map(s=><button key={s} onClick={()=>navigate(s)}>{s}<span>›</span></button>)}</div></section></>:<section><button className="child-back" onClick={()=>navigate('')}>← My support</button><fieldset disabled={busy||!snapshot.may_edit_setup}><Personalization value={value} change={change} modules={modules} enabled={value.modules??modules} setEnabled={()=>{}} section={section}/><button disabled={base===null||base!==snapshot.revision} onClick={()=>void write({changes:draft as Json,expected_revision:base!},'Settings saved')}>Save changes</button></fieldset>{!snapshot.may_edit_setup&&<p>Your parent manages these settings.</p>}{base!==null&&snapshot.revision!==base&&<button onClick={()=>{setDraft({});setBase(null);setStatus('Loaded latest settings')}}>Discard my edits and load latest settings</button>}</section>}</>}
+ {!snapshot&&!ended&&<button onClick={()=>void load()}>Retry connection</button>}<p role="status">{status}</p>
+ {token?(ended?<button onClick={exit}>Return to sign-in</button>:<details><summary>Parent controls</summary><form onSubmit={async e=>{e.preventDefault();const {data,error}=await client.rpc('ns_leave_device',{token,pin});if(data===true)exit();else setStatus(error?.message||'PIN unavailable. Check the PIN and try again later.');setPin('')}}><label>Parent PIN<input type="password" required pattern="[0-9]{6}" inputMode="numeric" value={pin} onChange={e=>setPin(e.target.value)}/></label><button>Disconnect and return to sign-in</button></form></details>):<button onClick={onSignOut}>Sign out</button>}
+ </main></>;
 }

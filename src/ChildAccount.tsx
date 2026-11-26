@@ -6,7 +6,7 @@ type Client = SupabaseClient<Database>;
 type Child = Database['public']['Tables']['ns_children']['Row'];
 export type Connection = Database['public']['Functions']['ns_child_connections']['Returns'][number];
 
-export function ChildInvite({ client, child, refresh }: { client: Client; child: Child; refresh: () => Promise<void> }) {
+export function ChildInvite({ client, child, refresh, expanded=false }: { client: Client; child: Child; refresh: () => Promise<void>; expanded?:boolean }) {
   const [email, setEmail] = useState('');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
@@ -26,7 +26,7 @@ export function ChildInvite({ client, child, refresh }: { client: Client; child:
       setBusy(false);
     }
   }
-  return <details><summary>Link a child account</summary>
+  return <details open={expanded||undefined}><summary>Link a child account</summary>
     <p>Use a separate email for {child.display_name}. The invitation appears in their NextStep account after email confirmation.</p>
     {child.invite_email && <p>{child.invite_email} · Expires {new Date(child.invite_expires!).toLocaleDateString()}</p>}
     <form onSubmit={e => { e.preventDefault(); void save(email.trim()); }}>
@@ -45,6 +45,7 @@ export function ChildConnection({ client, connections, refresh }: { client: Clie
       const { error } = await client.rpc('ns_accept_child_invite', { profile });
       if (error) throw error;
       await refresh();
+      window.dispatchEvent(new Event('nextstep-child-linked'));
     } catch (error) {
       setStatus((error as Error).message || 'Unable to accept invitation.');
     } finally {
