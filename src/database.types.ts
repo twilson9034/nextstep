@@ -154,6 +154,24 @@ export type Database = {
           },
         ]
       }
+      ns_personalization: {
+        Row: {
+          preferences: Json
+          revision: number
+          user_id: string
+        }
+        Insert: {
+          preferences: Json
+          revision?: number
+          user_id: string
+        }
+        Update: {
+          preferences?: Json
+          revision?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       ns_profiles: {
         Row: {
           display_name: string
