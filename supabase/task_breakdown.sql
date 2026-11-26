@@ -1,0 +1,1 @@
+alter table public.ns_tasks add column subtasks jsonb not null default '[]'::jsonb check(jsonb_typeof(subtasks)='array' and jsonb_array_length(subtasks)<=100), add column definition_of_done text not null default '' check(length(definition_of_done)<=4000); grant update(subtasks,definition_of_done) on public.ns_tasks to authenticated;
