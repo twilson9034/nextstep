@@ -267,7 +267,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      ns_manage_household: {
+        Args: { action: string; h: string; value: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
