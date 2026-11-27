@@ -2,7 +2,8 @@ import React, {useEffect, useState} from 'react';
 import type {SupabaseClient} from '@supabase/supabase-js';
 import type {Database, Json} from './database.types';
 import {ChildInvite} from './ChildAccount';
-import {ManageDevices} from './ManagedDevice';
+import {ManageDevices,DeviceWorkspace} from './ManagedDevice';
+import {type AvatarDesign} from './AvatarStudio';
 import {ParentRewards} from './Rewards';
 import {ParentAchievements} from './FamilyChallenges';
 import {AdventureEditor,Avatar,type Adventure} from './Adventure';
@@ -23,7 +24,7 @@ const editors: Partial<Record<Section,string>> = {
 };
 
 export function ChildSettings({client,child,refresh,back}:{client:SupabaseClient<Database>;child:Child;refresh:()=>Promise<void>;back:()=>void}) {
-  const [section,setSection]=useState<Section|null>(null);const [access,setAccess]=useState('');
+  const [preview,setPreview]=useState(false);const [section,setSection]=useState<Section|null>(null);const [access,setAccess]=useState('');
   const [snapshot,setSnapshot]=useState<Snapshot|null>(null),[draft,setDraft]=useState<Settings>({});
   const [status,setStatus]=useState(''),[busy,setBusy]=useState(false);
   async function load(){
@@ -46,13 +47,15 @@ export function ChildSettings({client,child,refresh,back}:{client:SupabaseClient
       setSnapshot(result.data as unknown as Snapshot);setDraft({});setStatus('Settings saved');
     }catch(e){setStatus((e as Error).message)}finally{setBusy(false)}
   }
-  const adventure:Adventure={theme:child.adventure_theme,avatar:child.adventure_avatar,color:child.adventure_color,allowed:child.allow_adventure_customization,revision:child.adventure_revision};
-  async function saveAdventure(next:Adventure){const r=await client.from('ns_children').update({adventure_theme:next.theme,adventure_avatar:next.avatar,adventure_color:next.color}).eq('id',child.id).eq('adventure_revision',next.revision).select('id').maybeSingle();if(r.error)throw new Error(r.error.message);if(!r.data){await refresh();throw new Error('Appearance changed. Reload and try again.')}await refresh();}
+  const adventure:Adventure={theme:child.adventure_theme,avatar:child.adventure_avatar,color:child.adventure_color,allowed:child.allow_adventure_customization,revision:child.adventure_revision,design:child.avatar_design as Partial<AvatarDesign>};
+  async function saveAdventure(next:Adventure){const r=await client.from('ns_children').update({adventure_theme:next.theme,adventure_avatar:next.avatar,adventure_color:next.color,avatar_design:(next.design||{}) as Json}).eq('id',child.id).eq('adventure_revision',next.revision).select('id').maybeSingle();if(r.error)throw new Error(r.error.message);if(!r.data){await refresh();throw new Error('Appearance changed. Reload and try again.')}await refresh();}
   const value={...defaults(),...snapshot?.preferences,...draft};
   const editor=section&&editors[section];
+  if(preview)return <DeviceWorkspace key={child.id} client={client} parentPreview={child.id} onClosePreview={()=>setPreview(false)}/>;
   return <section className="child-settings">
     <button className="child-back" disabled={busy} onClick={()=>section?navigate(null):back()}>← {section?'Child settings':'Managed children'}</button>
     <h2>{section||"Child settings"}</h2><div className="child-identity"><span className="child-avatar" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><circle cx="12" cy="8" r="4"/><path d="M4 22v-2a8 8 0 0 1 16 0v2"/></svg></span><div><strong>{child.display_name}</strong><small>{child.age_group.replace("_"," ")} · Managed profile</small><small className="child-link-status">{child.linked_user?"Email account linked":child.invite_email?"Email invitation pending":"No linked email account"}</small></div></div>
+    {!section&&<button className="child-access-card" onClick={()=>setPreview(true)}><ChildIcon index={8}/><span className="child-menu-text"><strong>View child profile</strong><small>See their dashboard, tasks, progress and rewards without switching accounts</small></span><span>›</span></button>}
     {!section&&groups.map(([label,items])=><div key={label} className="child-menu-group"><small>{label}</small><div className="child-settings-menu">{items.map(s=>{const i=sections.indexOf(s);return <button key={s} onClick={()=>navigate(s)}><ChildIcon index={i}/><span className="child-menu-text"><strong>{s}</strong><small>{descriptions[i]}</small></span><span aria-hidden="true">›</span></button>})}</div></div>)}
     {section==='Set up child access'&&<><p>Choose how your child accesses their existing profile.</p>{[['device','Without email','Pair a tablet, phone or shared device.'],['email','With email','Link your child’s own account.']].map(([id,title,desc])=><button key={id} className="child-access-card" aria-pressed={access===id} onClick={()=>setAccess(id)}><ChildIcon index={id==='device'?6:0}/><span className="child-menu-text"><strong>{title}</strong><small>{desc}</small></span><span>{access===id?'✓':'○'}</span></button>)}{access==='device'&&<ManageDevices client={client} profile={child.id} expanded/>}{access==='email'&&<ChildInvite client={client} child={child} refresh={refresh} expanded/>}</>}
     {section==='Rewards & Engagement'&&<><div className="settings-group-card">{([['gamification_enabled','Enable gamification','Experience points, levels and mission progress'],['rewards_enabled','Enable reward points','Earn separate points on eligible assigned tasks'],['require_reward_approval','Require reward approval','Review requests before points are spent']] as const).map(([key,title,description])=><label className="settings-toggle-row" key={key}><span className="settings-entry-text"><strong>{title}</strong><small>{description}</small></span><input className="settings-switch" type="checkbox" checked={child[key]} disabled={busy} onChange={async e=>{setBusy(true);try{const r=await client.from('ns_children').update({[key]:e.target.checked}).eq('id',child.id).select('id').single();if(r.error)throw r.error;await refresh();setStatus('Engagement settings saved')}catch(err){setStatus((err as Error).message)}finally{setBusy(false)}}}/></label>)}</div><p>XP: 2 per newly completed step, 10 per finished task. Set reward points when creating or editing a child’s assigned task. Turning off either feature preserves existing progress.</p><ParentRewards key={child.id} client={client} profile={child.id}/></>}

@@ -5,7 +5,8 @@ type Client=SupabaseClient<Database>;
 type Reward={id:string;title:string;description:string;cost:number;active:boolean;revision:number};
 type Request={id:string;reward_id:string;title:string;description:string;cost:number;status:'pending'|'approved'|'rejected'|'cancelled'|'fulfilled';created_at:string;decided_at:string|null;fulfilled_at:string|null};
 type Summary={xp:number;level:number;reward_points:number;earned_points:number;reserved_points:number;spent_points:number;require_reward_approval:boolean};
-type Snapshot={engagement:Summary;catalog:Reward[];requests:Request[]};
+export type RewardPreviewSnapshot={engagement:Summary;catalog:Reward[];requests:Request[]};
+type Snapshot=RewardPreviewSnapshot;
 type ParentArgs=Database['public']['Functions']['ns_parent_rewards']['Args'];
 type ChildArgs=Database['public']['Functions']['ns_child_rewards']['Args'];
 const labels={pending:'Waiting for approval',approved:'Approved · ready to receive',rejected:'Not approved · points returned',cancelled:'Cancelled · points returned',fulfilled:'Received'};
@@ -48,3 +49,5 @@ export function ChildRewards({client,token,refresh}:{client:Client;token?:string
  if(!data)return <section><p role="status">{status||'Loading your rewards…'}</p><button onClick={()=>void load()}>Retry</button></section>;
  return <div className="reward-panel"><Balance value={data.engagement}/><h2>Choose a reward</h2>{data.catalog.length?data.catalog.map(r=>{const waiting=data.requests.some(q=>q.reward_id===r.id&&q.status==='pending');const enough=data.engagement.reward_points>=r.cost;return <article className="reward-item reward-child-item" key={r.id}><div className="reward-item-title"><GiftIcon/><div><strong>{r.title}</strong><small>{r.cost} reward points</small></div></div>{r.description&&<p>{r.description}</p>}<button className="reward-primary" disabled={busy||waiting||!enough} onClick={()=>void redeem(r)}>{waiting?'Request pending':enough?data.engagement.require_reward_approval?'Request reward':'Redeem reward':'Earn '+(r.cost-data.engagement.reward_points)+' more points'}</button></article>}):<p>Your parent can add rewards for you.</p>}<h2>My reward requests</h2>{data.requests.length?data.requests.map(q=><RequestCard item={q} key={q.id}>{q.status==='pending'&&<button disabled={busy} onClick={()=>{if(confirm('Cancel this request and get your points back?'))void act({action:'cancel',request:q.id},'Request cancelled. Points returned.')}}>Cancel request</button>}</RequestCard>):<p>No requests yet.</p>}{status&&<p role="status">{status}</p>}</div>
 }
+
+export function RewardPreview({data}:{data:RewardPreviewSnapshot}){return <div className="reward-panel"><Balance value={data.engagement}/><h2>Choose a reward</h2>{data.catalog.filter(r=>r.active).map(r=><article className="reward-item reward-child-item" key={r.id}><div className="reward-item-title"><GiftIcon/><div><strong>{r.title}</strong><small>{r.cost} reward points</small></div></div>{r.description&&<p>{r.description}</p>}<button disabled>Preview only</button></article>)}<h2>My reward requests</h2>{data.requests.length?data.requests.map(q=><RequestCard item={q} key={q.id}/>):<p>No requests yet.</p>}</div>}

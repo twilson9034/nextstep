@@ -56,6 +56,7 @@ export type Database = {
           allow_adventure_customization: boolean
           allow_family_challenges: boolean
           archived: boolean
+          avatar_design: Json
           display_name: string
           gamification_enabled: boolean
           household_id: string
@@ -78,6 +79,7 @@ export type Database = {
           allow_adventure_customization?: boolean
           allow_family_challenges?: boolean
           archived?: boolean
+          avatar_design?: Json
           display_name: string
           gamification_enabled?: boolean
           household_id: string
@@ -100,6 +102,7 @@ export type Database = {
           allow_adventure_customization?: boolean
           allow_family_challenges?: boolean
           archived?: boolean
+          avatar_design?: Json
           display_name?: string
           gamification_enabled?: boolean
           household_id?: string
@@ -344,6 +347,17 @@ export type Database = {
         }
         Returns: Json
       }
+      ns_child_avatar_studio: {
+        Args: {
+          avatar: string
+          color: string
+          design: Json
+          expected_revision: number
+          theme: string
+          token?: string
+        }
+        Returns: Json
+      }
       ns_child_connections: {
         Args: never
         Returns: {
@@ -428,6 +442,7 @@ export type Database = {
         }
         Returns: Json
       }
+      ns_parent_child_preview: { Args: { profile: string }; Returns: Json }
       ns_parent_child_setup: {
         Args: { changes?: Json; expected_revision?: number; profile: string }
         Returns: Json
