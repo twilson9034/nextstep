@@ -1,6 +1,6 @@
 {
   "name": "nextstep",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "private": true,
   "type": "module",
   "scripts": {
@@ -12,14 +12,16 @@
     "test:readiness": "node --experimental-strip-types scripts/readiness.test.mjs",
     "test:recovery": "node --experimental-strip-types scripts/recovery.test.mjs",
     "test:focus": "node --experimental-strip-types scripts/focus.test.mjs",
-    "test:calendar": "node --experimental-strip-types scripts/calendar.test.mjs"
+    "test:calendar": "node --experimental-strip-types scripts/calendar.test.mjs",
+    "test:ics": "node --experimental-strip-types scripts/ics.test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.49.4",
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "qrcode": "1.5.4",
-    "three": "0.170.0"
+    "three": "0.170.0",
+    "ical.js": "2.2.1"
   },
   "devDependencies": {
     "@types/react": "19.0.10",

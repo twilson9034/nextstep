@@ -1,0 +1,8 @@
+import assert from 'node:assert/strict';
+import {parseCalendar,importId,normalizeFeedUrl} from '../src/icsImport.ts';
+const body=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//NextStep test//EN','BEGIN:VEVENT','UID:one','DTSTART;VALUE=DATE:20261127','DTEND;VALUE=DATE:20261128','SUMMARY:Practice\, game','END:VEVENT','BEGIN:VEVENT','UID:repeat','DTSTART:20261127T170000','DTEND:20261127T180000','RRULE:FREQ=DAILY;COUNT=3','EXDATE:20261128T170000','SUMMARY:Training','END:VEVENT','BEGIN:VEVENT','UID:cancel','DTSTART:20261127T170000','STATUS:CANCELLED','SUMMARY:Cancelled','END:VEVENT','BEGIN:VEVENT','UID:overnight','DTSTART:20261127T230000','DTEND:20261128T010000','SUMMARY:Overnight','END:VEVENT','END:VCALENDAR'].join('\r\n');
+const preview=parseCalendar(body,'2026-11-27');
+assert.equal(preview.events.length,3);assert.equal(preview.events[0].title,'Practice, game');assert.equal(preview.events[0].start_time,null);assert.equal(preview.events[1].start_time,'17:00');assert.equal(preview.events[2].event_date,'2026-11-29');assert.ok(preview.warnings.some(w=>w.includes('overnight')));
+assert.equal(normalizeFeedUrl('webcal://example.org/calendar.ics'),'https://example.org/calendar.ics');assert.throws(()=>normalizeFeedUrl('http://example.org/calendar.ics'));assert.throws(()=>normalizeFeedUrl('https://user:password@example.org/'));
+const id=await importId('owner',preview.events[0].key);assert.equal(id,await importId('owner',preview.events[0].key));assert.notEqual(id,await importId('other',preview.events[0].key));assert.match(id,/^[0-9a-f-]{36}$/);
+console.log('PASS: ICS all-day and timed events, recurring expansion, EXDATE, cancellation, unsupported overnight warning, link validation and stable account-scoped IDs');
