@@ -54,6 +54,7 @@ export type Database = {
           adventure_theme: string
           age_group: string
           allow_adventure_customization: boolean
+          allow_family_challenges: boolean
           archived: boolean
           display_name: string
           gamification_enabled: boolean
@@ -75,6 +76,7 @@ export type Database = {
           adventure_theme?: string
           age_group?: string
           allow_adventure_customization?: boolean
+          allow_family_challenges?: boolean
           archived?: boolean
           display_name: string
           gamification_enabled?: boolean
@@ -96,6 +98,7 @@ export type Database = {
           adventure_theme?: string
           age_group?: string
           allow_adventure_customization?: boolean
+          allow_family_challenges?: boolean
           archived?: boolean
           display_name?: string
           gamification_enabled?: boolean
@@ -410,6 +413,21 @@ export type Database = {
         Returns: undefined
       }
       ns_pair_device: { Args: { code: string }; Returns: string }
+      ns_parent_challenges: {
+        Args: {
+          action?: string
+          celebration?: string
+          challenge?: string
+          description?: string
+          expected_revision?: number
+          house: string
+          include_adults?: boolean
+          participants?: string[]
+          target?: number
+          title?: string
+        }
+        Returns: Json
+      }
       ns_parent_child_setup: {
         Args: { changes?: Json; expected_revision?: number; profile: string }
         Returns: Json
