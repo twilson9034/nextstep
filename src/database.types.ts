@@ -46,6 +46,66 @@ export type Database = {
           },
         ]
       }
+      ns_calendar_events: {
+        Row: {
+          child_id: string | null
+          created_at: string
+          creator_id: string
+          end_time: string | null
+          event_date: string
+          household_id: string | null
+          id: string
+          location: string
+          notes: string
+          revision: number
+          start_time: string | null
+          title: string
+        }
+        Insert: {
+          child_id?: string | null
+          created_at?: string
+          creator_id: string
+          end_time?: string | null
+          event_date: string
+          household_id?: string | null
+          id?: string
+          location?: string
+          notes?: string
+          revision?: number
+          start_time?: string | null
+          title: string
+        }
+        Update: {
+          child_id?: string | null
+          created_at?: string
+          creator_id?: string
+          end_time?: string | null
+          event_date?: string
+          household_id?: string | null
+          id?: string
+          location?: string
+          notes?: string
+          revision?: number
+          start_time?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ns_calendar_events_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "ns_children"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ns_calendar_events_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "ns_households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ns_children: {
         Row: {
           adventure_avatar: string
@@ -67,6 +127,7 @@ export type Database = {
           may_edit_setup: boolean
           require_reward_approval: boolean
           rewards_enabled: boolean
+          show_calendar: boolean
           show_completed_tasks: boolean
           show_support: boolean
           world_design: Json
@@ -91,6 +152,7 @@ export type Database = {
           may_edit_setup?: boolean
           require_reward_approval?: boolean
           rewards_enabled?: boolean
+          show_calendar?: boolean
           show_completed_tasks?: boolean
           show_support?: boolean
           world_design?: Json
@@ -115,6 +177,7 @@ export type Database = {
           may_edit_setup?: boolean
           require_reward_approval?: boolean
           rewards_enabled?: boolean
+          show_calendar?: boolean
           show_completed_tasks?: boolean
           show_support?: boolean
           world_design?: Json
