@@ -51,12 +51,14 @@ export type Database = {
           age_group: string
           archived: boolean
           display_name: string
+          gamification_enabled: boolean
           household_id: string
           id: string
           invite_email: string | null
           invite_expires: string | null
           linked_user: string | null
           may_edit_setup: boolean
+          rewards_enabled: boolean
           show_completed_tasks: boolean
           show_support: boolean
         }
@@ -64,12 +66,14 @@ export type Database = {
           age_group?: string
           archived?: boolean
           display_name: string
+          gamification_enabled?: boolean
           household_id: string
           id?: string
           invite_email?: string | null
           invite_expires?: string | null
           linked_user?: string | null
           may_edit_setup?: boolean
+          rewards_enabled?: boolean
           show_completed_tasks?: boolean
           show_support?: boolean
         }
@@ -77,12 +81,14 @@ export type Database = {
           age_group?: string
           archived?: boolean
           display_name?: string
+          gamification_enabled?: boolean
           household_id?: string
           id?: string
           invite_email?: string | null
           invite_expires?: string | null
           linked_user?: string | null
           may_edit_setup?: boolean
+          rewards_enabled?: boolean
           show_completed_tasks?: boolean
           show_support?: boolean
         }
@@ -246,6 +252,7 @@ export type Database = {
           id: string
           priority: string
           revision: number
+          reward_points: number
           subtasks: Json
           title: string
         }
@@ -262,6 +269,7 @@ export type Database = {
           id: string
           priority?: string
           revision?: number
+          reward_points?: number
           subtasks?: Json
           title: string
         }
@@ -278,6 +286,7 @@ export type Database = {
           id?: string
           priority?: string
           revision?: number
+          reward_points?: number
           subtasks?: Json
           title?: string
         }
@@ -367,6 +376,7 @@ export type Database = {
         Args: { changes?: Json; expected_revision?: number; profile: string }
         Returns: Json
       }
+      ns_parent_engagement: { Args: { profile: string }; Returns: Json }
     }
     Enums: {
       [_ in never]: never
