@@ -1,12 +1,14 @@
 import React,{useEffect,useRef,useState} from 'react';
 import * as THREE from 'three';
+import {getAssetPack,type AssetPack} from './AvatarAssetPack';
+import {AssetAvatarScene} from './AssetAvatarScene';
 export type AvatarDesign={skin:string;hair:string;hairColor:string;eyes:string;outfit:string;primary:string;secondary:string;helmet:string;number:string;position:string;accessory:string;companion:string};
 export const baseDesign:AvatarDesign={skin:'#d6aa83',hair:'swept',hairColor:'#765033',eyes:'#483327',outfit:'casual',primary:'#f97316',secondary:'#111827',helmet:'#111827',number:'9',position:'skater',accessory:'none',companion:'none'};
 export function designFor(avatar:string,design?:Partial<AvatarDesign>):AvatarDesign{return {...baseDesign,outfit:avatar==='athlete'?'hockey':avatar==='astronaut'?'space':avatar==='knight'?'knight':avatar==='robot'?'builder':'casual',companion:avatar==='fox'?'fox':avatar==='robot'?'robot':'none',...design}}
 const skinColors=['#f3d6bb','#d6aa83','#ba855c','#94623f','#70472f','#4d3327'],hairColors=['#39271d','#765033','#deb678','#211c22','#aa4c2d','#d2d6df'],eyeColors=['#483327','#3f749b','#497757','#88704a'],outfits=[['casual','Everyday explorer'],['hockey','Hockey player'],['space','Astronaut'],['knight','Knight'],['builder','Builder']];
 const safeColor=(v:string,fallback:string)=>/^#[0-9a-fA-F]{6}$/.test(v)?v:fallback;
 // A locally rendered modular character, no camera, external assets, network requests or animation loop.
-export function AvatarScene({design,portrait=false}:{design:AvatarDesign;portrait?:boolean}){
+function PrototypeAvatarScene({design,portrait=false}:{design:AvatarDesign;portrait?:boolean}){
  const host=useRef<HTMLDivElement>(null),[failed,setFailed]=useState(false),[angle,setAngle]=useState(-18);
  useEffect(()=>{const el=host.current;if(!el)return;let renderer:THREE.WebGLRenderer|undefined,observer:ResizeObserver|undefined;const scene=new THREE.Scene();let disposed=false;
  try{
@@ -61,6 +63,15 @@ export function AvatarScene({design,portrait=false}:{design:AvatarDesign;portrai
  return()=>{disposed=true;observer?.disconnect();const mats=new Set<THREE.Material>();scene.traverse(o=>{if(o instanceof THREE.Mesh){o.geometry.dispose();for(const m of Array.isArray(o.material)?o.material:[o.material])mats.add(m)}});mats.forEach(m=>{if('map'in m&&(m as THREE.MeshBasicMaterial).map)(m as THREE.MeshBasicMaterial).map?.dispose();m.dispose()});if(renderer){renderer.dispose();renderer.forceContextLoss();renderer.domElement.remove()}}
  },[design.skin,design.hair,design.hairColor,design.eyes,design.outfit,design.primary,design.secondary,design.helmet,design.number,design.position,design.accessory,design.companion,angle,portrait]);
  return <div className={'studio-preview '+(portrait?'studio-portrait':'')}><div ref={host} className="studio-canvas" role="img" aria-label={design.outfit+' avatar preview'}/>{failed&&<div className="studio-fallback"><span aria-hidden="true">★</span><p>3D preview unavailable on this device. Your customization is still saved.</p></div>}{!portrait&&!failed&&<div className="studio-rotate"><button type="button" aria-label="Rotate left" onClick={()=>setAngle(a=>a-30)}>↶</button><button type="button" onClick={()=>setAngle(-18)}>Front</button><button type="button" aria-label="Rotate right" onClick={()=>setAngle(a=>a+30)}>↷</button></div>}</div>
+}
+// The older geometry is an explicit fallback, not the approved artwork.
+export function AvatarScene({design,portrait=false}:{design:AvatarDesign;portrait?:boolean}){
+ const [state,setState]=useState<{outfit:string;pack:AssetPack|null;status:string}|null>(null);
+ useEffect(()=>{let live=true;getAssetPack(design.outfit).then(pack=>{if(live)setState({outfit:design.outfit,pack,status:pack?'':'Final character artwork not installed'})}).catch(e=>{if(live)setState({outfit:design.outfit,pack:null,status:(e as Error).message})});return()=>{live=false}},[design.outfit]);
+ const current=state?.outfit===design.outfit?state:null;
+ if(!current)return <div className={'studio-preview '+(portrait?'studio-portrait':'')}><div className="studio-fallback"><p>Loading avatar…</p></div></div>;
+ if(current.pack)return <AssetAvatarScene key={current.pack.file} pack={current.pack} design={design} portrait={portrait} onError={message=>setState({outfit:design.outfit,pack:null,status:message})}/>;
+ return <div className="studio-prototype-wrap"><PrototypeAvatarScene design={design} portrait={portrait}/>{!portrait&&<small className="studio-artwork-status">Prototype graphics · {current.status}</small>}</div>;
 }
 function Swatches({label,colors,value,onChange}:{label:string;colors:string[];value:string;onChange:(v:string)=>void}){return <div className="studio-swatches"><strong>{label}</strong><div>{colors.map(c=><button type="button" key={c} aria-label={label+' '+c} aria-pressed={value===c} style={{background:c,color:'#fff'}} onClick={()=>onChange(c)}>{value===c?'✓':''}</button>)}</div></div>}
 function Options({label,items,value,onChange}:{label:string;items:string[][];value:string;onChange:(v:string)=>void}){return <div className="studio-options"><strong>{label}</strong><div>{items.map(([id,name])=><button type="button" key={id} aria-pressed={value===id} onClick={()=>onChange(id)}>{name}</button>)}</div></div>}
