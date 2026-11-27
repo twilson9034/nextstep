@@ -1,10 +1,11 @@
+/// <reference types="vite/client" />
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import type {AvatarDesign} from './AvatarStudio';
 
 export type AssetPack={file:string;outfit:string;credit:string;revision:string};
 type Catalog={version:1;packs:Record<string,AssetPack>};
-const ASSETS=new URL(import.meta.env.BASE_URL+'avatar-assets/',location.origin);
+const assetRoot=()=>new URL(import.meta.env.BASE_URL+'avatar-assets/',location.origin);
 const LIMIT=24*1024*1024;
 let catalogPromise:Promise<Catalog>|undefined;
 const files=new Map<string,Promise<ArrayBuffer>>();
@@ -17,7 +18,7 @@ const variants:Record<string,string[]>={
 const tints:Partial<Record<keyof AvatarDesign,string>>={skin:'skin',hairColor:'hair',eyes:'iris',primary:'primary',secondary:'secondary',helmet:'helmet'};
 export async function getAssetPack(outfit:string):Promise<AssetPack|null>{
  if(!catalogPromise)catalogPromise=(async()=>{
-  const response=await fetch(new URL('manifest.json',ASSETS),{cache:'no-cache',credentials:'same-origin'});
+  const response=await fetch(new URL('manifest.json',assetRoot()),{cache:'no-cache',credentials:'same-origin'});
   if(!response.ok)throw new Error('Avatar catalog unavailable');
   const data=await response.json() as Catalog;
   if(data.version!==1||!data.packs||typeof data.packs!=='object')throw new Error('Invalid avatar catalog');
@@ -40,7 +41,7 @@ export function validateGlb(buffer:ArrayBuffer){
  if(json.extensionsRequired?.some((s:string)=>!['KHR_materials_unlit','KHR_texture_transform','KHR_materials_clearcoat','KHR_materials_sheen','KHR_materials_specular','KHR_materials_ior','KHR_materials_emissive_strength','KHR_materials_transmission','KHR_materials_volume'].includes(s)))throw new Error('Unsupported required avatar extension');
 }
 async function fetchPack(pack:AssetPack){
- const url=new URL(pack.file,ASSETS).href;
+ const url=new URL(pack.file,assetRoot()).href;
  let pending=files.get(url);
  if(!pending){pending=(async()=>{
   const r=await fetch(url,{credentials:'same-origin'});
@@ -90,13 +91,16 @@ export function applyAssetDesign(root:THREE.Object3D,design:AvatarDesign,portrai
   if(ctx){ctx.clearRect(0,0,512,512);ctx.font='bold 320px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineJoin='round';ctx.strokeStyle='#121c2a';ctx.lineWidth=20;ctx.strokeText(design.number,256,272);ctx.fillStyle='#ffffff';ctx.fillText(design.number,256,272);
    const texture=new THREE.CanvasTexture(canvas);texture.flipY=false;texture.colorSpace=THREE.SRGBColorSpace;
    // Keep the number decal independent of jersey fabric materials.
-   for(const mesh of meshes(number)){const old=Array.isArray(mesh.material)?mesh.material:[mesh.material];const material=new THREE.MeshStandardMaterial({map:texture,transparent:true,alphaTest:.01,roughness:.85,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2});material.name='custom_jersey_number';mesh.material=material;for(const m of old)if(!materials.has(m))m.dispose()}
+   const replaced=new Set<THREE.Material>();const material=new THREE.MeshStandardMaterial({map:texture,transparent:true,alphaTest:.01,roughness:.85,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2});material.name='custom_jersey_number';
+   for(const mesh of meshes(number)){for(const old of Array.isArray(mesh.material)?mesh.material:[mesh.material])replaced.add(old);mesh.material=material}
+   const remaining=new Set<THREE.Material>(),usedTextures=new Set<THREE.Texture>();root.traverse(o=>{if(o instanceof THREE.Mesh)for(const m of Array.isArray(o.material)?o.material:[o.material]){remaining.add(m);for(const v of Object.values(m))if(v instanceof THREE.Texture)usedTextures.add(v)}});
+   for(const old of replaced)if(!remaining.has(old)){for(const v of Object.values(old))if(v instanceof THREE.Texture&&!usedTextures.has(v))v.dispose();old.dispose()}
   }
  }
 }
 export async function loadAvatarAsset(pack:AssetPack,design:AvatarDesign,portrait:boolean){
  const data=await fetchPack(pack);const loader=new GLTFLoader();
- const gltf=await loader.parseAsync(data.slice(0),ASSETS.href);
+ const gltf=await loader.parseAsync(data.slice(0),assetRoot().href);
  try{validateAssetScene(gltf.scene,pack.outfit);applyAssetDesign(gltf.scene,design,portrait);return gltf.scene}
  catch(e){disposeAsset(gltf.scene);throw e}
 }

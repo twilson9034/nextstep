@@ -12,7 +12,7 @@ export function AssetAvatarScene({pack,design,portrait=false,onError}:{pack:Asse
   model=await loadAvatarAsset(pack,design,portrait);
   if(!alive){disposeAsset(model);return}
   scene=new THREE.Scene();
-  const box=new THREE.Box3().setFromObject(model),height=box.getSize(new THREE.Vector3()).y,center=box.getCenter(new THREE.Vector3());
+  const bounds=new THREE.Box3();model.updateMatrixWorld(true);model.traverseVisible(o=>{if(o instanceof THREE.Mesh){o.geometry.computeBoundingBox();if(o.geometry.boundingBox)bounds.union(o.geometry.boundingBox.clone().applyMatrix4(o.matrixWorld))}});const box=bounds.isEmpty()?new THREE.Box3().setFromObject(model):bounds,height=Math.max(.05,box.getSize(new THREE.Vector3()).y),center=box.getCenter(new THREE.Vector3());
   // Normalize authored +Y up, +Z forward assets; preserve their proportions.
   model.position.set(-center.x,-box.min.y,-center.z);
   const pivot=new THREE.Group();pivot.add(model);pivot.scale.setScalar(3.2/height);scene.add(pivot);pivot.rotation.y=rotation.current*Math.PI/180;

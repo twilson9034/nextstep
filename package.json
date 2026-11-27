@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build"
+    "build": "tsc --noEmit && vite build",
+    "test:avatar-assets": "node --experimental-strip-types scripts/avatar-assets.test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.49.4",
