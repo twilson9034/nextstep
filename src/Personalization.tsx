@@ -1,6 +1,7 @@
 import React,{useState,useEffect,useRef} from 'react';
 import type {SupabaseClient} from '@supabase/supabase-js';
 import type {Database,Json} from './database.types';
+import {ChildPersonalization,type ChildAudience} from './ChildPersonalization';
 export const styles=[
 ['Attention & Follow-Through','Starting, focusing and finishing','#60A5FA','◎','Keep unfinished tasks visible','Suggest task breakdowns','Maintain active task continuity','Offer focus reminders'],
 ['Rechecking & Perfection','Getting stuck checking or refining','#A78BFA','✓','Show Definition of Done','Offer stopping points'],
@@ -38,9 +39,9 @@ persist({...latest.current,revision:payload.revision,pending:latest.current.valu
 useEffect(()=>{alive.current=true;void sync();const timer=setInterval(()=>void sync(),5000);const online=()=>void sync();window.addEventListener('online',online);return()=>{alive.current=false;clearInterval(timer);window.removeEventListener('online',online)}},[key,canEdit]);
 return {value:store.value,change,status,conflict,resolve:(cloud:boolean)=>{if(!conflict)return;try{localStorage.setItem(key+':backup',JSON.stringify(cloud?latest.current:conflict));persist(cloud?conflict:{...latest.current,revision:conflict.revision,pending:true});setConflict(null);void sync()}catch{setStatus('Unable to preserve backup')}}};
 }
-type Props={managedChild?:boolean,readOnly?:boolean,value:Preferences,change:(p:Partial<Preferences>)=>void,modules:string[],enabled:string[],setEnabled:(v:string[])=>void,section?:string,onFamily?:()=>void};
+type Props={childAudience?:ChildAudience,ageGroup?:string,managedChild?:boolean,readOnly?:boolean,value:Preferences,change:(p:Partial<Preferences>)=>void,modules:string[],enabled:string[],setEnabled:(v:string[])=>void,section?:string,onFamily?:()=>void};
 function toggle(list:string[],v:string){return list.includes(v)?list.filter(x=>x!==v):[...list,v]}
-export function Personalization(props:Props){return props.readOnly?<><p>Your parent manages your personalization.</p><fieldset disabled><PersonalizationEditor {...props}/></fieldset></>:<PersonalizationEditor {...props}/>}
+export function Personalization(props:Props){if(props.childAudience&&props.section){const content=<ChildPersonalization {...props} audience={props.childAudience} styles={styles} strengths={strengths} decisions={decisions}/>;return props.readOnly?<><p>Your parent manages your personalization.</p><fieldset disabled>{content}</fieldset></>:content}return props.readOnly?<><p>Your parent manages your personalization.</p><fieldset disabled><PersonalizationEditor {...props}/></fieldset></>:<PersonalizationEditor {...props}/>}
 function PersonalizationEditor({value:p,change,modules,enabled,setEnabled,section,onFamily,managedChild=false}:Props){
 const [quiz,setQuiz]=useState(-1),[strength,setStrength]=useState(-1);
 const step=Math.max(0,Math.min(6,p.step));const titles=['Your mind. Your pace.','Personal or family','My Brain Style','Personalize support','My Modules','My Assistance','Review and finish'];
