@@ -1,14 +1,14 @@
 import assert from 'node:assert/strict';
 import {interestNames} from '../src/WorldCatalog.ts';
 import {collectionItems,upgradeTier,nextUnlock,unlockedItems,displayItem,stageName} from '../src/ProgressionCatalog.ts';
-assert.equal(collectionItems.length,Object.keys(interestNames).length*3);
+assert.equal(collectionItems.length,Object.keys(interestNames).length*7);
 assert.equal(new Set(collectionItems.map(i=>i.id)).size,collectionItems.length);
 for(const i of collectionItems)assert.ok(interestNames[i.interest]);
 assert.equal(upgradeTier(99),0);assert.equal(upgradeTier(100),1);assert.equal(upgradeTier(400),2);assert.equal(upgradeTier(900),3);
-assert.equal(nextUnlock(100),400);assert.equal(nextUnlock(900),null);
+assert.equal(nextUnlock(100),400);assert.equal(nextUnlock(900),1000);assert.equal(nextUnlock(10000),null);
 assert.equal(displayItem('hockey:2',399),undefined);assert.equal(displayItem('hockey:2',400).title,'All-star stick emblem');
 assert.equal(unlockedItems(100).length,Object.keys(interestNames).length);
-assert.equal(unlockedItems(900).length,collectionItems.length);
+assert.equal(unlockedItems(900).length,Object.keys(interestNames).length*3);assert.equal(unlockedItems(10000).length,collectionItems.length);assert.equal(displayItem('hockey:7',9999),undefined);assert.equal(displayItem('hockey:7',10000).title,'Majors prestige emblem');
 assert.equal(stageName('hockey',3),'Peewee tournament decorations');
 console.log('PASS: XP thresholds, stable collectible IDs, all interests covered, no spending, locked display rejected');
 

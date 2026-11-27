@@ -1,3 +1,4 @@
+import {prestigeRanks,prestigeThresholds} from './PrestigeCatalog.ts';
 export const milestones=[100,400,900] as const;
 export const collections:Record<string,[string,string,string]> = {
  simple:['First progress badge','Milestone medal','Progress trophy'],
@@ -27,9 +28,9 @@ export const collections:Record<string,[string,string,string]> = {
  design:['Idea badge','Design tools emblem','Creative champion trophy']
 };
 export type Collectible={id:string;interest:string;title:string;threshold:number;tier:number};
-export const collectionItems:Collectible[]=Object.entries(collections).flatMap(([interest,names])=>names.map((title,i)=>({id:interest+':'+(i+1),interest,title,threshold:milestones[i],tier:i+1})));
+export const collectionItems:Collectible[]=Object.entries(collections).flatMap(([interest,names])=>[...names.map((title,i)=>({id:interest+':'+(i+1),interest,title,threshold:milestones[i],tier:i+1})),...prestigeRanks[interest].slice(1).map((rank,i)=>({id:interest+':'+(i+4),interest,title:rank+' prestige emblem',threshold:prestigeThresholds[i+1],tier:i+4}))]);
 export function upgradeTier(xp:number){return milestones.filter(m=>xp>=m).length}
-export function nextUnlock(xp:number){return milestones.find(m=>xp<m)??null}
+export function nextUnlock(xp:number){return [...milestones,...prestigeThresholds.slice(1)].find(m=>xp<m)??null}
 export function unlockedItems(xp:number){return collectionItems.filter(i=>xp>=i.threshold)}
 export function displayItem(id:string|undefined,xp:number){return collectionItems.find(i=>i.id===id&&xp>=i.threshold)}
 export function stageName(interest:string,tier:number){
