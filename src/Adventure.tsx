@@ -1,4 +1,4 @@
-import React,{useState} from 'react';
+import React,{useEffect,useState} from 'react';
 export type Adventure={theme:string;avatar:string;color:string;allowed:boolean;revision:number};
 export const defaultAdventure:Adventure={theme:'simple',avatar:'explorer',color:'cyan',allowed:true,revision:0};
 const themes=[
@@ -42,6 +42,7 @@ export function AdventureEditor({value,onSave,onCancel}:{value:Adventure;onSave:
  const [draft,setDraft]=useState(value),[busy,setBusy]=useState(false),[status,setStatus]=useState('');
  const changed=draft.theme!==value.theme||draft.avatar!==value.avatar||draft.color!==value.color;
  const stale=draft.revision!==value.revision;
+ useEffect(()=>{if(!changed&&stale)setDraft(value)},[changed,stale,value.revision]);
  const save=async()=>{setBusy(true);setStatus('');try{await onSave(draft);setStatus('Appearance saved')}catch(e){setStatus((e as Error).message||'Unable to save appearance')}finally{setBusy(false)}};
  return <div className="adventure-editor"><AdventureBanner value={draft}/><h2>Choose a world</h2><div className="adventure-themes">{themes.map(t=><button type="button" key={t.id} className="adventure-choice" aria-pressed={draft.theme===t.id} disabled={busy} onClick={()=>setDraft(v=>({...v,theme:t.id}))}><ThemeArt theme={t.id}/><span><strong>{t.name}</strong><small>{t.description}</small></span><span className="adventure-choice-check" aria-hidden="true">{draft.theme===t.id?'✓':'○'}</span></button>)}</div><h2>Choose an avatar</h2><div className="adventure-avatars">{avatars.map(([id,name])=><button type="button" key={id} aria-pressed={draft.avatar===id} disabled={busy} onClick={()=>setDraft(v=>({...v,avatar:id}))}><Avatar avatar={id} color={draft.color}/><span>{name}</span></button>)}</div><h2>Choose a color</h2><div className="adventure-colors">{colors.map(([id,name,hex])=><button type="button" key={id} aria-pressed={draft.color===id} aria-label={name} disabled={busy} onClick={()=>setDraft(v=>({...v,color:id}))}><span style={{background:hex}}>{draft.color===id?'✓':''}</span><small>{name}</small></button>)}</div>{stale&&<p role="status">Appearance changed on another device. <button type="button" onClick={()=>{setDraft(value);setStatus('')}}>Load latest appearance</button></p>}<div className="row"><button type="button" disabled={busy} onClick={()=>{setDraft(value);onCancel?.()}}>Cancel</button><button type="button" className="reward-primary" disabled={busy||!changed||stale} onClick={()=>void save()}>Save appearance</button></div>{status&&<p role="status">{status}</p>}</div>
 }
