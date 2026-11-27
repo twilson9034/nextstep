@@ -44,7 +44,8 @@ export function achievementTheme(adventure?:Adventure):string{
  return interestFor(adventure);
 }
 export function themedAchievement(item:Achievement,adventure?:Adventure):Achievement{
- const theme=achievementTheme(adventure),names=interestTitles[theme];const set=sets[theme==='wildlife'?'animals':theme==='blocks'?'builder':theme]||(names?{names,icons:sets.sports.icons}:undefined),i=ids.indexOf(item.id);
+ const theme=achievementTheme(adventure),names=interestTitles[theme];const icons= ['dragons','knights','wizards'].includes(theme)?sets.fantasy.icons:['pets','dinosaurs','ocean','camping','mountains','treasure'].includes(theme)?sets.animals.icons:['construction','engineering','art','music','design'].includes(theme)?sets.builder.icons:sets.sports.icons;
+ const set=sets[theme==='wildlife'?'animals':theme==='blocks'?'builder':theme]||(names?{names,icons}:undefined),i=ids.indexOf(item.id);
  if(!set||i<0)return item;
  // Preserve actual requirements: chores and steps, not literal sporting achievements.
  const descriptions=['Complete your first individual task step','Finish your first assigned task','Complete 10 individual task steps','Finish 5 assigned tasks','Earn 100 XP','Finish 20 assigned tasks','Complete 50 individual task steps','Earn 400 XP'];

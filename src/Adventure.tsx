@@ -41,8 +41,8 @@ export function ThemeArt({theme}:{theme:string}){
 export function AdventureBanner({value,level,edit}:{value:Adventure;level?:number;edit?:()=>void}){
  return <div className={'adventure-banner adventure-banner-'+value.theme}><WorldArt environment={environmentFor(value)} atmosphere={worldSettings(value).atmosphere} accent={worldSettings(value).accent}/><div className="adventure-banner-caption">{value.design&&Object.keys(value.design).length>0?<AvatarScene portrait design={designFor(value.avatar,value.design)}/>:<Avatar avatar={value.avatar} color={value.color}/>}<div><small>{worldTitle(value)} · {locations[environmentFor(value)]}</small><h2>{level!==undefined?'Level '+level:'Your adventure'}</h2><p>Every step counts.</p></div>{edit&&<button type="button" className="adventure-edit" onClick={edit} aria-label="Customize adventure">Edit</button>}</div></div>
 }
-export function AdventureEditor({value,onSave,onCancel}:{value:Adventure;onSave:(next:Adventure)=>Promise<void>;onCancel?:()=>void}){
- const [draft,setDraft]=useState(value),[busy,setBusy]=useState(false),[status,setStatus]=useState(''),[editorTab,setEditorTab]=useState<'world'|'avatar'>('world');
+export function AdventureEditor({value,onSave,onCancel,initialTab='world'}:{value:Adventure;onSave:(next:Adventure)=>Promise<void>;onCancel?:()=>void;initialTab?:'world'|'avatar'}){
+ const [draft,setDraft]=useState(value),[busy,setBusy]=useState(false),[status,setStatus]=useState(''),[editorTab,setEditorTab]=useState<'world'|'avatar'>(initialTab);
  const signature=(a:Adventure)=>JSON.stringify([a.theme,a.avatar,a.color,worldSettings(a),...Object.entries(designFor(a.avatar,a.design)).sort(([a],[b])=>a.localeCompare(b))]);
  const changed=signature(draft)!==signature(value);
  const stale=draft.revision!==value.revision;
