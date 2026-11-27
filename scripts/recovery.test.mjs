@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import {initialRecovery,choosePace,currentRecovery,recoveryExpiry,smallAction,urgentPool} from '../src/recovery.ts';
+assert.equal(choosePace('normal'),initialRecovery);
+const low=choosePace('low',100);assert.equal(low.quickWin,true);assert.equal(currentRecovery(low,100),low);assert.equal(currentRecovery(low,100+recoveryExpiry),initialRecovery);
+const step={id:'s',title:'Put books away',done:false};const tasks=[{id:'a',done:false,effort:'demanding',steps:[]},{id:'b',done:false,effort:'light',steps:[step]},{id:'c',done:false,effort:'light',steps:[]}];
+assert.equal(smallAction(tasks,t=>t.steps).step,step);
+assert.equal(smallAction([tasks[0]],t=>t.steps),null);
+assert.equal(smallAction([tasks[2]],t=>t.steps).step,null);
+assert.equal(smallAction([tasks[2]],t=>t.steps,false),null);
+assert.equal(smallAction([{...tasks[1],steps:[{...step,done:true}]}],t=>t.steps),null);
+assert.deepEqual(urgentPool([{task:tasks[0],urgency:2},{task:tasks[1],urgency:0}]),[tasks[0]]);
+assert.equal(tasks[1].steps[0].done,false);
+console.log('PASS: temporary recovery expiry, ordinary pace reset, known step and light effort eligibility, no child whole-task shortcut, urgent group, no automatic mutation');
