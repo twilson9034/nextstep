@@ -278,6 +278,7 @@ export type Database = {
           household_id: string | null
           id: string
           priority: string
+          repeat_rule: string
           revision: number
           reward_points: number
           subtasks: Json
@@ -295,6 +296,7 @@ export type Database = {
           household_id?: string | null
           id: string
           priority?: string
+          repeat_rule?: string
           revision?: number
           reward_points?: number
           subtasks?: Json
@@ -312,6 +314,7 @@ export type Database = {
           household_id?: string | null
           id?: string
           priority?: string
+          repeat_rule?: string
           revision?: number
           reward_points?: number
           subtasks?: Json

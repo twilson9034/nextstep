@@ -1,6 +1,6 @@
 {
   "name": "nextstep",
-  "version": "0.4.5",
+  "version": "0.4.6",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,7 +10,8 @@
     "test:worlds": "node --experimental-strip-types --experimental-specifier-resolution=node scripts/worlds.test.mjs",
     "test:progression": "node --experimental-strip-types scripts/progression.test.mjs",
     "test:readiness": "node --experimental-strip-types scripts/readiness.test.mjs",
-    "test:recovery": "node --experimental-strip-types scripts/recovery.test.mjs"
+    "test:recovery": "node --experimental-strip-types scripts/recovery.test.mjs",
+    "test:focus": "node --experimental-strip-types scripts/focus.test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.49.4",
