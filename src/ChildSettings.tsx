@@ -4,6 +4,7 @@ import type {Database, Json} from './database.types';
 import {ChildInvite} from './ChildAccount';
 import {ManageDevices,DeviceWorkspace} from './ManagedDevice';
 import {type AvatarDesign} from './AvatarStudio';
+import type {WorldDesign} from './WorldCatalog';
 import {ParentRewards} from './Rewards';
 import {ParentAchievements} from './FamilyChallenges';
 import {AdventureEditor,Avatar,type Adventure} from './Adventure';
@@ -47,8 +48,8 @@ export function ChildSettings({client,child,refresh,back}:{client:SupabaseClient
       setSnapshot(result.data as unknown as Snapshot);setDraft({});setStatus('Settings saved');
     }catch(e){setStatus((e as Error).message)}finally{setBusy(false)}
   }
-  const adventure:Adventure={theme:child.adventure_theme,avatar:child.adventure_avatar,color:child.adventure_color,allowed:child.allow_adventure_customization,revision:child.adventure_revision,design:child.avatar_design as Partial<AvatarDesign>};
-  async function saveAdventure(next:Adventure){const r=await client.from('ns_children').update({adventure_theme:next.theme,adventure_avatar:next.avatar,adventure_color:next.color,avatar_design:(next.design||{}) as Json}).eq('id',child.id).eq('adventure_revision',next.revision).select('id').maybeSingle();if(r.error)throw new Error(r.error.message);if(!r.data){await refresh();throw new Error('Appearance changed. Reload and try again.')}await refresh();}
+  const adventure:Adventure={theme:child.adventure_theme,avatar:child.adventure_avatar,color:child.adventure_color,allowed:child.allow_adventure_customization,revision:child.adventure_revision,design:child.avatar_design as Partial<AvatarDesign>,world:child.world_design as Partial<WorldDesign>};
+  async function saveAdventure(next:Adventure){const r=await client.from('ns_children').update({adventure_theme:next.theme,adventure_avatar:next.avatar,adventure_color:next.color,avatar_design:(next.design||{}) as Json,world_design:(next.world||{}) as Json}).eq('id',child.id).eq('adventure_revision',next.revision).select('id').maybeSingle();if(r.error)throw new Error(r.error.message);if(!r.data){await refresh();throw new Error('Appearance changed. Reload and try again.')}await refresh();}
   const value={...defaults(),...snapshot?.preferences,...draft};
   const editor=section&&editors[section];
   if(preview)return <DeviceWorkspace key={child.id} client={client} parentPreview={child.id} onClosePreview={()=>{setPreview(false);void refresh()}}/>;

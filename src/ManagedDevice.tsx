@@ -110,12 +110,12 @@ export function DeviceWorkspace({client,token,onSignOut,parentPreview,onClosePre
  pending.current=true;sequence.current++;setBusy(true);
  try{
   if(parentPreview){
-   const r=await client.from('ns_children').update({adventure_theme:next.theme,adventure_avatar:next.avatar,adventure_color:next.color,avatar_design:(next.design||{}) as Json}).eq('id',parentPreview).eq('archived',false).eq('adventure_revision',next.revision).select('adventure_revision').maybeSingle();
+   const r=await client.from('ns_children').update({adventure_theme:next.theme,adventure_avatar:next.avatar,adventure_color:next.color,avatar_design:(next.design||{}) as Json,world_design:(next.world||{}) as Json}).eq('id',parentPreview).eq('archived',false).eq('adventure_revision',next.revision).select('adventure_revision').maybeSingle();
    if(r.error)throw new Error(r.error.message);if(!r.data)throw new Error('Appearance changed or access ended. Reload and try again.');
    const revision=r.data.adventure_revision;
    setSnapshot(old=>old?{...old,adventure:{...next,revision}}:old);
   }else{
-   const r=await client.rpc('ns_child_avatar_studio',{...args,theme:next.theme,avatar:next.avatar,color:next.color,design:(next.design||{}) as Json,expected_revision:next.revision});
+   const r=await client.rpc('ns_child_world_studio',{...args,theme:next.theme,avatar:next.avatar,color:next.color,design:(next.design||{}) as Json,world:(next.world||{}) as Json,expected_revision:next.revision});
    if(r.error)throw new Error(r.error.message);
    setSnapshot(old=>old?{...old,adventure:r.data as unknown as Adventure}:old);
   }

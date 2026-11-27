@@ -1,12 +1,13 @@
 {
   "name": "nextstep",
-  "version": "0.4.4.5",
+  "version": "0.4.4.6",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "test:avatar-assets": "node --experimental-strip-types scripts/avatar-assets.test.mjs"
+    "test:avatar-assets": "node --experimental-strip-types scripts/avatar-assets.test.mjs",
+    "test:worlds": "node --experimental-strip-types --experimental-specifier-resolution=node scripts/worlds.test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.49.4",

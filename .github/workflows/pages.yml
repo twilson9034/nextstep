@@ -20,6 +20,7 @@ jobs:
           node-version: '22'
       - run: npm install
       - run: npm run test:avatar-assets
+      - run: npm run test:worlds
       - run: npm run build
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

@@ -1,4 +1,5 @@
 import type {Adventure} from './Adventure';
+import {interestFor} from './WorldCatalog';
 import type {Achievement} from './FamilyChallenges';
 // Theme presentation is separate from the permanent server milestone IDs and thresholds.
 const ids=['first-step','first-mission','step-builder','momentum','level-two','steady-progress','step-master','level-five'];
@@ -11,14 +12,39 @@ const sets:Record<string,ThemeSet>={
  animals:{names:['First Pawprint','Trail Complete','Woodland Explorer','Trail Buddy','Wildlife Friend','Forest Guardian','Master Tracker','Nature Champion'],icons:['paw','flag','paw','zap','star','shield','paw','trophy']},
  builder:{names:['First Brick','First Build','Block Builder','Building Momentum','Apprentice Builder','Master Workshop','Blueprint Hero','Master Builder'],icons:['layers','flag','layers','zap','star','layers','sparkles','trophy']}
 };
+const interestTitles:Record<string,string[]>={
+ basketball:['First Dribble','First Basket','Ball Handling Star','Scoring Run','Rookie Season','Playoff Ready','Court Hero','All-Star'],
+ soccer:['First Touch','First Goal','Dribbling Star','Winning Moves','Rising Player','Match Ready','Pitch Hero','All-Star'],
+ football:['First Down','Touchdown','Playmaker','Drive Builder','Rookie Season','Game Ready','Gridiron Hero','Champion'],
+ baseball:['First Pitch','First Hit','Batting Practice','On Base','Rookie Season','In the Lineup','Diamond Hero','All-Star'],
+ gymnastics:['First Move','Routine Complete','Balance Star','Finding Flow','Rising Gymnast','Meet Ready','Routine Hero','Champion'],
+ motorsports:['Starting Grid','First Lap','Pit Crew Star','Race Pace','Rookie Driver','Race Ready','Track Hero','Champion'],
+ dragons:['First Flight','First Quest','Dragon Keeper','Rising Flame','Sky Rider','Realm Guardian','Flight Master','Dragon Legend'],
+ knights:['First Quest','Quest Complete','Shield Apprentice','Quest Seeker','Rising Knight','Realm Protector','Sword of Honor','Royal Champion'],
+ wizards:['First Spell','First Quest','Spell Apprentice','Magic Momentum','Rising Mage','Spellbook Scholar','Magic Master','Archmage'],
+ pets:['First Pawprint','First Adventure','Pet Pal','Happy Trails','Animal Friend','Care Champion','Pawprint Hero','Best Companion'],
+ dinosaurs:['First Footprint','First Fossil','Fossil Finder','Trail Explorer','Junior Paleontologist','Dino Researcher','Expedition Hero','Dino Expert'],
+ ocean:['First Dive','First Discovery','Reef Explorer','Making Waves','Ocean Cadet','Deep Sea Explorer','Current Rider','Ocean Champion'],
+ construction:['First Brick','First Build','Site Helper','Building Momentum','Apprentice Builder','Site Leader','Blueprint Hero','Master Builder'],
+ engineering:['First Design','First Prototype','Problem Solver','Iteration Star','Junior Engineer','Workshop Leader','Inventor','Master Engineer'],
+ camping:['First Trail','Camp Set','Trail Scout','Adventure Ready','Rising Explorer','Camp Leader','Trail Hero','Wilderness Expert'],
+ mountains:['First Ascent','First Summit','Trail Builder','Climbing Higher','Rising Climber','Summit Ready','Peak Explorer','Mountain Champion'],
+ treasure:['First Clue','First Treasure','Map Reader','Trail Finder','Junior Adventurer','Expedition Leader','Treasure Tracker','Legendary Explorer'],
+ art:['First Sketch','First Creation','Sketchbook Star','Creative Flow','Rising Artist','Studio Ready','Color Master','Master Artist'],
+ music:['First Note','First Song','Rhythm Star','Finding the Beat','Rising Musician','Stage Ready','Melody Master','Music Champion'],
+ design:['First Idea','First Design','Creative Builder','Design Flow','Rising Designer','Studio Leader','Design Hero','Master Designer']
+};
 export function achievementTheme(adventure?:Adventure):string{
  if(!adventure)return 'simple';
- const hockey=adventure.design?.outfit==='hockey'||(!adventure.design?.outfit&&adventure.avatar==='athlete');
- if(hockey&&(adventure.theme==='sports'||adventure.theme==='simple'))return 'hockey';
- return adventure.theme;
+ // Preserve legacy theme labels until the user deliberately chooses an interest.
+ if(!adventure.world?.interest||adventure.world.interest==='auto'){
+  const i=interestFor(adventure);
+  return i==='hockey'?'hockey':adventure.theme;
+ }
+ return interestFor(adventure);
 }
 export function themedAchievement(item:Achievement,adventure?:Adventure):Achievement{
- const set=sets[achievementTheme(adventure)],i=ids.indexOf(item.id);
+ const theme=achievementTheme(adventure),names=interestTitles[theme];const set=sets[theme==='wildlife'?'animals':theme==='blocks'?'builder':theme]||(names?{names,icons:sets.sports.icons}:undefined),i=ids.indexOf(item.id);
  if(!set||i<0)return item;
  // Preserve actual requirements: chores and steps, not literal sporting achievements.
  const descriptions=['Complete your first individual task step','Finish your first assigned task','Complete 10 individual task steps','Finish 5 assigned tasks','Earn 100 XP','Finish 20 assigned tasks','Complete 50 individual task steps','Earn 400 XP'];

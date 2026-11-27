@@ -69,6 +69,7 @@ export type Database = {
           rewards_enabled: boolean
           show_completed_tasks: boolean
           show_support: boolean
+          world_design: Json
         }
         Insert: {
           adventure_avatar?: string
@@ -92,6 +93,7 @@ export type Database = {
           rewards_enabled?: boolean
           show_completed_tasks?: boolean
           show_support?: boolean
+          world_design?: Json
         }
         Update: {
           adventure_avatar?: string
@@ -115,6 +117,7 @@ export type Database = {
           rewards_enabled?: boolean
           show_completed_tasks?: boolean
           show_support?: boolean
+          world_design?: Json
         }
         Relationships: [
           {
@@ -401,6 +404,18 @@ export type Database = {
           task_id?: string
           task_revision?: number
           token?: string
+        }
+        Returns: Json
+      }
+      ns_child_world_studio: {
+        Args: {
+          avatar: string
+          color: string
+          design: Json
+          expected_revision: number
+          theme: string
+          token?: string
+          world: Json
         }
         Returns: Json
       }
