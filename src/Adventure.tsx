@@ -41,7 +41,8 @@ export function AdventureBanner({value,level,edit}:{value:Adventure;level?:numbe
 }
 export function AdventureEditor({value,onSave,onCancel}:{value:Adventure;onSave:(next:Adventure)=>Promise<void>;onCancel?:()=>void}){
  const [draft,setDraft]=useState(value),[busy,setBusy]=useState(false),[status,setStatus]=useState('');
- const changed=draft.theme!==value.theme||draft.avatar!==value.avatar||draft.color!==value.color||JSON.stringify(draft.design||{})!==JSON.stringify(value.design||{});
+ const signature=(a:Adventure)=>JSON.stringify([a.theme,a.avatar,a.color,...Object.entries(designFor(a.avatar,a.design)).sort(([a],[b])=>a.localeCompare(b))]);
+ const changed=signature(draft)!==signature(value);
  const stale=draft.revision!==value.revision;
  useEffect(()=>{if(!changed&&stale)setDraft(value)},[changed,stale,value.revision]);
  const save=async()=>{setBusy(true);setStatus('');try{await onSave({...draft,design:designFor(draft.avatar,draft.design)});setStatus('Appearance saved')}catch(e){setStatus((e as Error).message||'Unable to save appearance')}finally{setBusy(false)}};
