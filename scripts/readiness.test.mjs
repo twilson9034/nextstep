@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import {currentReadiness,expiryMs,readinessSupport,supportMessage} from '../src/readiness.ts';
+import {rankTasks} from '../src/recommendations.ts';
+const state={energy:'Normal',capacity:'Limited',feelings:['Overwhelmed'],checkedAt:100};
+assert.equal(currentReadiness(state,100),state);assert.equal(currentReadiness(state,100+expiryMs),null);assert.equal(currentReadiness(state,99),null);assert.equal(currentReadiness(null),null);
+assert.equal(readinessSupport(state).reduceChoices,true);assert.equal(readinessSupport(null).reduceChoices,false);assert.equal(readinessSupport(null).energy,'Unspecified');
+assert.equal(readinessSupport({...state,capacity:'Steady',feelings:['Distracted']}).distracted,true);assert.ok(supportMessage(state,true).includes('little step'));
+const task=(id,effort,due_date,priority='normal')=>({id,effort,due_date,priority,done:false,creator_id:'guest',assignee_child:null,assignee_user:null,created_at:id});
+const today='2026-11-27',tasks=[task('a','demanding',today),task('b','light',null),task('c','moderate',null),task('d','demanding','2026-11-26')];
+const ranked=rankTasks(tasks,null,'Low','Adaptive',today,true);
+assert.deepEqual(ranked.map(r=>r.task.id),['d','a','b','c']);
+assert.equal(rankTasks([task('a','moderate',null)],null,'Unspecified','Guided',today)[0].reason,'Available task');
+assert.equal(tasks.length,4);assert.equal(tasks[0].due_date,today);
+console.log('PASS: readiness expiration, neutral defaults, limited capacity, energy guidance, urgent-task priority and unchanged tasks');
