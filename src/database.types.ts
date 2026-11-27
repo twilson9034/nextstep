@@ -57,6 +57,8 @@ export type Database = {
           invite_expires: string | null
           linked_user: string | null
           may_edit_setup: boolean
+          show_completed_tasks: boolean
+          show_support: boolean
         }
         Insert: {
           age_group?: string
@@ -68,6 +70,8 @@ export type Database = {
           invite_expires?: string | null
           linked_user?: string | null
           may_edit_setup?: boolean
+          show_completed_tasks?: boolean
+          show_support?: boolean
         }
         Update: {
           age_group?: string
@@ -79,6 +83,8 @@ export type Database = {
           invite_expires?: string | null
           linked_user?: string | null
           may_edit_setup?: boolean
+          show_completed_tasks?: boolean
+          show_support?: boolean
         }
         Relationships: [
           {
@@ -311,6 +317,18 @@ export type Database = {
       ns_child_invite: {
         Args: { address: string | null; profile: string }
         Returns: undefined
+      }
+      ns_child_progress: {
+        Args: {
+          changes?: Json
+          expected_revision?: number
+          step_done?: boolean
+          step_id?: string
+          task_id?: string
+          task_revision?: number
+          token?: string
+        }
+        Returns: Json
       }
       ns_child_workspace: {
         Args: {
