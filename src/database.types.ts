@@ -58,6 +58,7 @@ export type Database = {
           invite_expires: string | null
           linked_user: string | null
           may_edit_setup: boolean
+          require_reward_approval: boolean
           rewards_enabled: boolean
           show_completed_tasks: boolean
           show_support: boolean
@@ -73,6 +74,7 @@ export type Database = {
           invite_expires?: string | null
           linked_user?: string | null
           may_edit_setup?: boolean
+          require_reward_approval?: boolean
           rewards_enabled?: boolean
           show_completed_tasks?: boolean
           show_support?: boolean
@@ -88,6 +90,7 @@ export type Database = {
           invite_expires?: string | null
           linked_user?: string | null
           may_edit_setup?: boolean
+          require_reward_approval?: boolean
           rewards_enabled?: boolean
           show_completed_tasks?: boolean
           show_support?: boolean
@@ -339,6 +342,16 @@ export type Database = {
         }
         Returns: Json
       }
+      ns_child_rewards: {
+        Args: {
+          action?: string
+          expected_cost?: number
+          request?: string
+          reward?: string
+          token?: string
+        }
+        Returns: Json
+      }
       ns_child_workspace: {
         Args: {
           changes?: Json
@@ -377,6 +390,19 @@ export type Database = {
         Returns: Json
       }
       ns_parent_engagement: { Args: { profile: string }; Returns: Json }
+      ns_parent_rewards: {
+        Args: {
+          action?: string
+          cost?: number
+          description?: string
+          expected_revision?: number
+          profile: string
+          request?: string
+          reward?: string
+          title?: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never
