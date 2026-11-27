@@ -33,6 +33,6 @@ export function nextUnlock(xp:number){return milestones.find(m=>xp<m)??null}
 export function unlockedItems(xp:number){return collectionItems.filter(i=>xp>=i.threshold)}
 export function displayItem(id:string|undefined,xp:number){return collectionItems.find(i=>i.id===id&&xp>=i.threshold)}
 export function stageName(interest:string,tier:number){
- const special:Record<string,string[]>={hockey:['Practice rink','Rookie season','Training center','Championship arena'],space:['Launch site','Explorer base','Research station','Deep space command'],blocks:['Starter build','Builder camp','Workshop village','Master builder world'],motorsports:['Practice track','Rookie garage','Race team HQ','Championship circuit'],engineering:['Workbench','Prototype lab','Innovation workshop','Research center']};
+ const special:Record<string,string[]>={hockey:['Practice rink','Peewee team banners','Peewee training area','Peewee tournament decorations'],space:['Launch site','Explorer base','Research station','Deep space command'],blocks:['Starter build','Builder camp','Workshop village','Master builder world'],motorsports:['Practice track','Rookie garage','Race team HQ','Championship circuit'],engineering:['Workbench','Prototype lab','Innovation workshop','Research center']};
  return (special[interest]||['Starting adventure','Growing adventure','Expanded adventure','Champion adventure'])[Math.max(0,Math.min(3,tier))];
 }
