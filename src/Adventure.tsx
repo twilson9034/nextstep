@@ -1,7 +1,9 @@
 import React,{useEffect,useState} from 'react';
 import {AvatarStudio,AvatarScene,designFor,type AvatarDesign} from './AvatarStudio';
 import {WorldArt,WorldEditor} from './WorldArt';
-import {worldSettings,worldTitle,environmentFor,locations,type WorldDesign} from './WorldCatalog';
+import {CollectibleIcon,WorldUpgradeArt} from './AdventureProgress';
+import {displayItem,upgradeTier} from './ProgressionCatalog';
+import {worldSettings,worldTitle,environmentFor,locations,interestFor,type WorldDesign} from './WorldCatalog';
 export type Adventure={theme:string;avatar:string;color:string;allowed:boolean;revision:number;design?:Partial<AvatarDesign>;world?:Partial<WorldDesign>};
 export const defaultAdventure:Adventure={theme:'simple',avatar:'explorer',color:'cyan',allowed:true,revision:0};
 const themes=[
@@ -38,12 +40,13 @@ export function ThemeArt({theme}:{theme:string}){
  <><path d="M0 104L76 104V82H149V60H222V38H295V16H360V128H0Z" fill={t.land}/><path d="M28 106H90V84H162V62H235V40H307V18" fill="none" stroke={t.accent} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/><path d="M299 18h8v8" stroke={t.accent} strokeWidth="3" fill="none" strokeLinecap="round"/></>}
  </svg>
 }
-export function AdventureBanner({value,level,edit}:{value:Adventure;level?:number;edit?:()=>void}){
- return <div className={'adventure-banner adventure-banner-'+value.theme}><WorldArt environment={environmentFor(value)} atmosphere={worldSettings(value).atmosphere} accent={worldSettings(value).accent}/><div className="adventure-banner-caption">{value.design&&Object.keys(value.design).length>0?<AvatarScene portrait design={designFor(value.avatar,value.design)}/>:<Avatar avatar={value.avatar} color={value.color}/>}<div><small>{worldTitle(value)} · {locations[environmentFor(value)]}</small><h2>{level!==undefined?'Level '+level:'Your adventure'}</h2><p>Every step counts.</p></div>{edit&&<button type="button" className="adventure-edit" onClick={edit} aria-label="Customize adventure">Edit</button>}</div></div>
+export function AdventureBanner({value,level,xp,edit}:{value:Adventure;level?:number;xp?:number;edit?:()=>void}){
+ const w=worldSettings(value),interest=interestFor(value),item=displayItem(w.collection,xp??0),tier=upgradeTier(xp??0);
+ return <div className={'adventure-banner adventure-banner-'+value.theme}><div className="world-stage-art"><WorldArt environment={environmentFor(value)} atmosphere={w.atmosphere} accent={w.accent}/>{w.upgrades!==false&&interest!=='simple'&&<WorldUpgradeArt tier={tier} interest={interest}/>}</div><div className="adventure-banner-caption">{value.design&&Object.keys(value.design).length>0?<AvatarScene portrait design={designFor(value.avatar,value.design)}/>:<Avatar avatar={value.avatar} color={value.color}/>}<div><small>{worldTitle(value)} · {locations[environmentFor(value)]}</small><h2>{level!==undefined?'Level '+level:'Your adventure'}</h2><p>Every step counts.</p>{item&&<span className="banner-collectible"><CollectibleIcon tier={item.tier}/>{item.title}</span>}</div>{edit&&<button type="button" className="adventure-edit" onClick={edit} aria-label="Customize adventure">Edit</button>}</div></div>
 }
 export function AdventureEditor({value,onSave,onCancel,initialTab='world'}:{value:Adventure;onSave:(next:Adventure)=>Promise<void>;onCancel?:()=>void;initialTab?:'world'|'avatar'}){
  const [draft,setDraft]=useState(value),[busy,setBusy]=useState(false),[status,setStatus]=useState(''),[editorTab,setEditorTab]=useState<'world'|'avatar'>(initialTab);
- const signature=(a:Adventure)=>JSON.stringify([a.theme,a.avatar,a.color,worldSettings(a),...Object.entries(designFor(a.avatar,a.design)).sort(([a],[b])=>a.localeCompare(b))]);
+ const signature=(a:Adventure)=>JSON.stringify([a.theme,a.avatar,a.color,Object.entries(worldSettings(a)).sort(([a],[b])=>a.localeCompare(b)),...Object.entries(designFor(a.avatar,a.design)).sort(([a],[b])=>a.localeCompare(b))]);
  const changed=signature(draft)!==signature(value);
  const stale=draft.revision!==value.revision;
  useEffect(()=>{if(!changed&&stale)setDraft(value)},[changed,stale,value.revision]);
