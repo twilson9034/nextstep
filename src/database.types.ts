@@ -48,7 +48,12 @@ export type Database = {
       }
       ns_children: {
         Row: {
+          adventure_avatar: string
+          adventure_color: string
+          adventure_revision: number
+          adventure_theme: string
           age_group: string
+          allow_adventure_customization: boolean
           archived: boolean
           display_name: string
           gamification_enabled: boolean
@@ -64,7 +69,12 @@ export type Database = {
           show_support: boolean
         }
         Insert: {
+          adventure_avatar?: string
+          adventure_color?: string
+          adventure_revision?: number
+          adventure_theme?: string
           age_group?: string
+          allow_adventure_customization?: boolean
           archived?: boolean
           display_name: string
           gamification_enabled?: boolean
@@ -80,7 +90,12 @@ export type Database = {
           show_support?: boolean
         }
         Update: {
+          adventure_avatar?: string
+          adventure_color?: string
+          adventure_revision?: number
+          adventure_theme?: string
           age_group?: string
+          allow_adventure_customization?: boolean
           archived?: boolean
           display_name?: string
           gamification_enabled?: boolean
@@ -316,6 +331,16 @@ export type Database = {
     }
     Functions: {
       ns_accept_child_invite: { Args: { profile: string }; Returns: undefined }
+      ns_child_adventure: {
+        Args: {
+          avatar: string
+          color: string
+          expected_revision: number
+          theme: string
+          token?: string
+        }
+        Returns: Json
+      }
       ns_child_connections: {
         Args: never
         Returns: {
