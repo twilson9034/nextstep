@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';import {findImportCopies,isOneTimeImport} from '../src/calendarCleanup.ts';import {importId} from '../src/icsImport.ts';
+const owner='owner',key='["original-event"]',id=await importId(owner,key),unmatched=await importId(owner,'["cancelled"]'),other=await importId('other',key),edited=await importId(owner,'["edited"]');
+const base={creator_id:owner,subscription_id:null,source_key:null,source_name:null,title:'Practice',event_date:'2026-11-27',start_time:'17:00',end_time:'18:00',location:'Rink',notes:'',household_id:null,child_id:null,revision:0,created_at:'2026-11-27T00:00:00Z'};
+const original={...base,id},linked={...base,id:crypto.randomUUID(),subscription_id:'sub',source_key:key,source_name:'Hockey',start_time:'19:00'},manual={...base,id:crypto.randomUUID()},cancelled={...base,id:unmatched},differentOwner={...base,id:other,creator_id:'other'},editedCopy={...base,id:edited,revision:1},editedLinked={...linked,id:crypto.randomUUID(),source_key:'["edited"]'};
+const result=await findImportCopies([original,linked,manual,cancelled,differentOwner,editedCopy,editedLinked],owner,importId);
+assert.equal(result.length,3);assert.equal(result[0].event.id,id);assert.equal(result[0].recommended,true);assert.equal(result[0].matches[0].id,linked.id);assert.equal(result.find(c=>c.event.id===unmatched).recommended,false);assert.equal(result.find(c=>c.event.id===edited).recommended,false);
+assert.equal(isOneTimeImport(manual,owner),false);assert.equal(isOneTimeImport(linked,owner),false);assert.equal(isOneTimeImport(differentOwner,owner),false);
+assert.equal((await findImportCopies([original,{...linked,household_id:'household'}],owner,importId))[0].recommended,false);
+assert.equal((await findImportCopies([original,{...linked,creator_id:'other'}],owner,importId))[0].matches.length,0);
+console.log('PASS: original import identity, changed-time matching, manual and linked protection, owner isolation, unmatched and edited copy review, sharing safety');

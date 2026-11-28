@@ -1,3 +1,5 @@
+import {CalendarCleanup} from './CalendarCleanup';
+import {isOneTimeImport} from './calendarCleanup';
 import {CalendarSubscriptions,useCalendarSubscriptions} from './CalendarSubscriptions';
 import {CalendarImport} from './CalendarImport';
 import {importId,type ImportEvent} from './icsImport';
@@ -52,6 +54,23 @@ async function readICloud(url:string){
  if(!r.data?.ics)throw Error(r.data?.error||'iCloud did not return a calendar.');
  return r.data.ics;
  }
+ async function loadImportCleanup():Promise<EventRow[]>{
+ if(!userId)return read<EventRow[]>(key,[]);
+ if(!client||!navigator.onLine)throw Error('Connect to review account imports.');
+ const rows:EventRow[]=[];
+ for(let page=0;;page++){const r=await client.from('ns_calendar_events').select('*').eq('creator_id',userId).order('id').range(page*500,page*500+499);if(r.error)throw Error(r.error.message);rows.push(...(r.data||[]));if((r.data?.length||0)<500)break}
+ return rows;
+ }
+ async function removeImportCopies(entries:EventRow[]){
+ const owner=userId||'guest',chosen=entries.filter(e=>isOneTimeImport(e,owner));if(chosen.length!==entries.length)throw Error('Only your one-time imports may be removed here.');
+ if(!userId){const old=read<EventRow[]>(key,[]),versions=new Map(chosen.map(e=>[e.id,e.revision]));const next=old.filter(e=>!isOneTimeImport(e,owner)||versions.get(e.id)!==e.revision);localSave(next);return (old.length-next.length)+' imported copies removed.'}
+ if(!client||!navigator.onLine)throw Error('Connect to remove account imports.');
+ let removed=0;
+ try{const groups=new Map<number,string[]>();for(const e of chosen)groups.set(e.revision,[...(groups.get(e.revision)||[]),e.id]);
+ for(const [revision,ids] of groups)for(let i=0;i<ids.length;i+=50){const r=await client.from('ns_calendar_events').delete().eq('creator_id',userId).is('subscription_id',null).eq('revision',revision).in('id',ids.slice(i,i+50)).select('id');if(r.error)throw Error(r.error.message);removed+=r.data?.length||0}
+ return removed+' imported copies removed.'+(removed<chosen.length?' '+(chosen.length-removed)+' changed or were already removed; review again.':'');
+ }catch(e){throw Error(removed+' copies removed before the operation stopped. Review again before retrying. '+(e as Error).message)}finally{void refresh()}
+ }
  async function importEvents(entries:ImportEvent[]){
  if(userId&&(!client||!navigator.onLine))throw Error('Connect to import account calendar events.');
  const rows=await Promise.all(entries.map(async e=>{const {key,...fields}=e;return {...fields,subscription_id:null,source_key:null,source_name:null,source_color:null,id:await importId(userId||'guest',key),creator_id:userId||'guest',household_id:null,child_id:null,revision:0,created_at:new Date().toISOString()}}));
@@ -62,6 +81,6 @@ async function readICloud(url:string){
  }
  if(compact)return <>{userId&&!online?<section><h2>Upcoming schedule</h2><p>Connect to view your calendar.</p></section>:<UpcomingSchedule items={items} onOpen={onOpen||(()=>{})}/>}</>;
  const change=(patch:Partial<Draft>)=>setDraft(old=>old?{...old,...patch}:old);
- return <>{userId&&client&&online&&<CalendarSubscriptions controls={subscriptions} houses={houses} children={children} hidden={hidden} onToggle={id=>setHidden(old=>{const next=old.includes(id)?old.filter(x=>x!==id):[...old,id];try{localStorage.setItem(key+':hidden',JSON.stringify(next))}catch{}return next})}/>}<CalendarImport readICloud={userId&&client?readICloud:undefined} readCrossbar={userId&&client?readCrossbar:undefined} onImport={importEvents} disabled={!!userId&&!online}/><section className="calendar-filters"><label>Calendar visibility<select value={scope} onChange={e=>setScope(e.target.value)}><option value="all">All calendars</option><option value="private">Only me</option>{houses.map(h=><option key={h.id} value={h.id}>{h.name}</option>)}</select></label><small>{userId?online?'Account calendar · shared events sync across devices':'Offline — account calendar unavailable':'Guest events stay on this device.'}</small></section>{(!userId||online)&&<CalendarView items={items} onEdit={edit} onAdd={add}/>}
+ return <>{userId&&client&&online&&<CalendarSubscriptions controls={subscriptions} houses={houses} children={children} hidden={hidden} onToggle={id=>setHidden(old=>{const next=old.includes(id)?old.filter(x=>x!==id):[...old,id];try{localStorage.setItem(key+':hidden',JSON.stringify(next))}catch{}return next})}/>}<CalendarCleanup owner={userId||'guest'} load={loadImportCleanup} onRemove={removeImportCopies} disabled={!!userId&&!online}/><CalendarImport readICloud={userId&&client?readICloud:undefined} readCrossbar={userId&&client?readCrossbar:undefined} onImport={importEvents} disabled={!!userId&&!online}/><section className="calendar-filters"><label>Calendar visibility<select value={scope} onChange={e=>setScope(e.target.value)}><option value="all">All calendars</option><option value="private">Only me</option>{houses.map(h=><option key={h.id} value={h.id}>{h.name}</option>)}</select></label><small>{userId?online?'Account calendar · shared events sync across devices':'Offline — account calendar unavailable':'Guest events stay on this device.'}</small></section>{(!userId||online)&&<CalendarView items={items} onEdit={edit} onAdd={add}/>}
  {draft&&<section className="calendar-editor"><form onSubmit={e=>{e.preventDefault();void save()}}><h2>{editing?'Edit event':'New event'}</h2><label>Title<input required maxLength={200} value={draft.title} onChange={e=>change({title:e.target.value})}/></label><label>Date<input type="date" required value={draft.event_date} onChange={e=>change({event_date:e.target.value})}/></label><div className="row"><label>Start (optional)<input type="time" value={draft.start_time} onChange={e=>change({start_time:e.target.value,...(!e.target.value?{end_time:''}:{})})}/></label><label>End (optional)<input type="time" disabled={!draft.start_time} value={draft.end_time} onChange={e=>change({end_time:e.target.value})}/></label></div><label>Location<input maxLength={300} value={draft.location} onChange={e=>change({location:e.target.value})}/></label><label>Notes<textarea maxLength={2000} value={draft.notes} onChange={e=>change({notes:e.target.value})}/></label>{userId&&<><label>Visibility<select value={draft.household_id} onChange={e=>change({household_id:e.target.value,child_id:''})}><option value="">Only me</option>{houses.map(h=><option key={h.id} value={h.id}>{h.name}</option>)}</select></label>{draft.household_id&&<label>Show to children<select value={draft.child_id} onChange={e=>change({child_id:e.target.value})}><option value="">All children in household</option>{children.filter(c=>c.household_id===draft.household_id).map(c=><option key={c.id} value={c.id}>{c.display_name}</option>)}</select></label>}<small>Shared events are visible to household adults and the selected children. Times use the scheduled local clock.</small></>}<div className="row"><button type="button" disabled={busy} onClick={()=>{setDraft(null);setEditing(null)}}>Cancel</button><button type="submit" disabled={busy}>Save event</button>{editing&&<button type="button" disabled={busy} onClick={()=>void remove()}>Delete</button>}</div></form></section>}<p role="status">{status}</p></>
 }
