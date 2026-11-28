@@ -58,7 +58,11 @@ export type Database = {
           location: string
           notes: string
           revision: number
+          source_color: string | null
+          source_key: string | null
+          source_name: string | null
           start_time: string | null
+          subscription_id: string | null
           title: string
         }
         Insert: {
@@ -72,7 +76,11 @@ export type Database = {
           location?: string
           notes?: string
           revision?: number
+          source_color?: string | null
+          source_key?: string | null
+          source_name?: string | null
           start_time?: string | null
+          subscription_id?: string | null
           title: string
         }
         Update: {
@@ -86,7 +94,11 @@ export type Database = {
           location?: string
           notes?: string
           revision?: number
+          source_color?: string | null
+          source_key?: string | null
+          source_name?: string | null
           start_time?: string | null
+          subscription_id?: string | null
           title?: string
         }
         Relationships: [
@@ -99,6 +111,73 @@ export type Database = {
           },
           {
             foreignKeyName: "ns_calendar_events_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "ns_households"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ns_calendar_events_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "ns_calendar_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ns_calendar_subscriptions: {
+        Row: {
+          child_id: string | null
+          color: string
+          creator_id: string
+          feed_url: string
+          household_id: string | null
+          id: string
+          last_synced_at: string | null
+          last_warning: string
+          name: string
+          provider: string
+          revision: number
+          timezone: string
+        }
+        Insert: {
+          child_id?: string | null
+          color?: string
+          creator_id: string
+          feed_url: string
+          household_id?: string | null
+          id?: string
+          last_synced_at?: string | null
+          last_warning?: string
+          name: string
+          provider: string
+          revision?: number
+          timezone: string
+        }
+        Update: {
+          child_id?: string | null
+          color?: string
+          creator_id?: string
+          feed_url?: string
+          household_id?: string | null
+          id?: string
+          last_synced_at?: string | null
+          last_warning?: string
+          name?: string
+          provider?: string
+          revision?: number
+          timezone?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ns_calendar_subscriptions_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "ns_children"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ns_calendar_subscriptions_household_id_fkey"
             columns: ["household_id"]
             isOneToOne: false
             referencedRelation: "ns_households"
@@ -406,6 +485,19 @@ export type Database = {
     }
     Functions: {
       ns_accept_child_invite: { Args: { profile: string }; Returns: undefined }
+      ns_calendar_subscription: {
+        Args: {
+          action: string
+          complete?: boolean
+          entries?: Json
+          expected_revision?: number
+          settings?: Json
+          subscription?: string
+          window_end?: string
+          window_start?: string
+        }
+        Returns: Json
+      }
       ns_child_adventure: {
         Args: {
           avatar: string

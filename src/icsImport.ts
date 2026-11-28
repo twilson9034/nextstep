@@ -1,3 +1,4 @@
+import {dateInZone} from './subscription.ts';
 import ICAL from 'ical.js';
 import {dayKey,shiftDay} from './calendar.ts';
 type Time=InstanceType<typeof ICAL.Time>;
@@ -6,10 +7,10 @@ export const MAX_ICS_BYTES=2*1024*1024;
 export type ImportEvent={key:string;title:string;event_date:string;start_time:string|null;end_time:string|null;location:string;notes:string};
 export type ImportPreview={events:ImportEvent[];warnings:string[];skipped:number};
 const pad=(n:number)=>String(n).padStart(2,'0');
-function civil(t:Time){
+function civil(t:Time,timezone?:string){
  if(t.isDate||t.zone.tzid==='floating')return {day:t.year+'-'+pad(t.month)+'-'+pad(t.day),time:t.isDate?null:pad(t.hour)+':'+pad(t.minute)};
  const d=t.toJSDate();if(!Number.isFinite(d.getTime()))throw Error('Invalid date');
- return {day:dayKey(d),time:pad(d.getHours())+':'+pad(d.getMinutes())};
+ return timezone?dateInZone(d,timezone):{day:dayKey(d),time:pad(d.getHours())+':'+pad(d.getMinutes())};
 }
 export function normalizeFeedUrl(value:string){
  const u=new URL(value.trim().replace(/^webcal:\/\//i,'https://'));
@@ -34,7 +35,7 @@ export async function importId(owner:string,key:string){
  const h=Array.from(bytes.slice(0,16),x=>x.toString(16).padStart(2,'0')).join('');
  return h.slice(0,8)+'-'+h.slice(8,12)+'-'+h.slice(12,16)+'-'+h.slice(16,20)+'-'+h.slice(20,32)
 }
-export function parseCalendar(text:string,today=dayKey(new Date())):ImportPreview{
+export function parseCalendar(text:string,today=dayKey(new Date()),timezone?:string):ImportPreview{
  if(new TextEncoder().encode(text).length>MAX_ICS_BYTES)throw Error('Calendar exceeds 2 MB.');
  const root=new ICAL.Component(ICAL.parse(text.replace(/^\uFEFF/,'')));
  if(root.name!=='vcalendar')throw Error('Expected an iCalendar (.ics) file.');
@@ -51,7 +52,7 @@ export function parseCalendar(text:string,today=dayKey(new Date())):ImportPrevie
   const supportedZones=(comp:typeof parts[number])=>['dtstart','dtend','recurrence-id','rdate','exdate'].every(n=>comp.getAllProperties(n).every(p=>{const z=p.getParameter('tzid');return !z||typeof z==='string'&&ICAL.TimezoneService.has(z)}));
   function add(event:Event,start:Time,end:Time,key:string){
    if(String(event.component.getFirstPropertyValue('status')).toUpperCase()==='CANCELLED')return;
-   const a=civil(start),b=civil(end);
+   const a=civil(start,timezone),b=civil(end,timezone);
    if(a.day<lower||a.day>upper)return;
    if(start.isDate!==end.isDate||start.isDate&&b.day!==a.day&&b.day!==shiftDay(a.day,1)||!start.isDate&&b.day!==a.day){skip('Multi-day and overnight events were skipped; the native calendar currently supports single-day events.');return}
    const title=String(event.summary||'Untitled event').trim().slice(0,200)||'Untitled event';
@@ -77,7 +78,7 @@ export function parseCalendar(text:string,today=dayKey(new Date())):ImportPrevie
     // Limit work for old and pathological recurring series.
     while((next=iterator.next())){
      if(++iterations>20000){warnings.add('Recurrence expansion limit reached. Export a smaller date range.');break}
-     if(civil(next).day>shiftDay(upper,7))break;
+     if(civil(next,timezone).day>shiftDay(upper,7))break;
      const occurrence=event.getOccurrenceDetails(next);
      add(occurrence.item,occurrence.startDate,occurrence.endDate,JSON.stringify([uid,next.toString()]));
      if(events.size>=500)break;
