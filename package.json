@@ -1,6 +1,6 @@
 {
   "name": "nextstep",
-  "version": "0.5.1.4",
+  "version": "0.5.1.5",
   "private": true,
   "type": "module",
   "scripts": {
@@ -17,7 +17,8 @@
     "test:crossbar": "node --experimental-strip-types scripts/crossbar.test.mjs",
     "test:icloud": "node --experimental-strip-types scripts/icloud.test.mjs",
     "test:subscriptions": "node --experimental-strip-types scripts/subscriptions.test.mjs",
-    "test:calendar-cleanup": "node --experimental-strip-types scripts/calendar-cleanup.test.mjs"
+    "test:calendar-cleanup": "node --experimental-strip-types scripts/calendar-cleanup.test.mjs",
+    "test:today": "node --experimental-strip-types scripts/today.test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.49.4",

@@ -31,6 +31,7 @@ jobs:
       - run: npm run test:icloud
       - run: npm run test:subscriptions
       - run: npm run test:calendar-cleanup
+      - run: npm run test:today
       - run: npm run build
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
