@@ -400,6 +400,7 @@ export type Database = {
           location: string
           repeat_rule: string
           revision: number
+          reward_points: number
           start_time: string | null
           steps: Json
           title: string
@@ -418,6 +419,7 @@ export type Database = {
           location?: string
           repeat_rule: string
           revision?: number
+          reward_points?: number
           start_time?: string | null
           steps?: Json
           title: string
@@ -436,6 +438,7 @@ export type Database = {
           location?: string
           repeat_rule?: string
           revision?: number
+          reward_points?: number
           start_time?: string | null
           steps?: Json
           title?: string
