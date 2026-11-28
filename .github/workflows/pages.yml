@@ -27,6 +27,7 @@ jobs:
       - run: npm run test:focus
       - run: npm run test:calendar
       - run: npm run test:ics
+      - run: npm run test:crossbar
       - run: npm run build
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

@@ -1,6 +1,6 @@
 {
   "name": "nextstep",
-  "version": "0.5.1",
+  "version": "0.5.1.1",
   "private": true,
   "type": "module",
   "scripts": {
@@ -13,7 +13,8 @@
     "test:recovery": "node --experimental-strip-types scripts/recovery.test.mjs",
     "test:focus": "node --experimental-strip-types scripts/focus.test.mjs",
     "test:calendar": "node --experimental-strip-types scripts/calendar.test.mjs",
-    "test:ics": "node --experimental-strip-types scripts/ics.test.mjs"
+    "test:ics": "node --experimental-strip-types scripts/ics.test.mjs",
+    "test:crossbar": "node --experimental-strip-types scripts/crossbar.test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.49.4",

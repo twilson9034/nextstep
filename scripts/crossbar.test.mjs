@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import {crossbarUrl,redirectTarget,readCrossbar,maxBytes} from '../supabase/functions/crossbar-calendar/feed.ts';
+const u=crossbarUrl('webcal://accounts.crossbar.org/calendar/ical/123?type=games_only');
+assert.equal(u.href,'https://accounts.crossbar.org/calendar/ical/123?type=games_only');
+assert.equal(crossbarUrl('https://club.example/calendar/ical/123?member=test').hostname,'accounts.crossbar.org');
+for(const v of ['http://accounts.crossbar.org/calendar/ical/1','https://user:pass@accounts.crossbar.org/calendar/ical/1','https://accounts.crossbar.org:123/calendar/ical/1','https://accounts.crossbar.org/private','https://accounts.crossbar.org/calendar/ical/1#fragment'])assert.throws(()=>crossbarUrl(v));
+assert.throws(()=>redirectTarget(u,'https://127.0.0.1/calendar/ical/1'));
+assert.throws(()=>redirectTarget(u,'https://accounts.crossbar.org.evil.test/calendar/ical/1'));
+assert.throws(()=>redirectTarget(u,'https://accounts.crossbar.org/login'));
+const ics='BEGIN:VCALENDAR\r\nVERSION:2.0\r\nEND:VCALENDAR';
+let called=0;
+assert.equal(await readCrossbar(u.href,async url=>{called++;assert.equal(url.hostname,'accounts.crossbar.org');return called===1?new Response(null,{status:302,headers:{location:'/calendar/ical/123?type=all'}}):new Response(ics)}),ics);
+await assert.rejects(()=>readCrossbar(u.href,async()=>new Response('<html>Sign in</html>')),/rather than a calendar/);
+await assert.rejects(()=>readCrossbar(u.href,async()=>new Response(null,{status:302,headers:{location:'https://example.org/calendar/ical/123'}})),/unsupported redirect/);
+await assert.rejects(()=>readCrossbar(u.href,async()=>new Response('x'.repeat(maxBytes+1))),/exceeds/);
+console.log('PASS: Crossbar link normalization, fixed outbound host, redirect restrictions, response validation and size limits');
