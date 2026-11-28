@@ -208,6 +208,7 @@ export type Database = {
           rewards_enabled: boolean
           show_calendar: boolean
           show_completed_tasks: boolean
+          show_routines: boolean
           show_support: boolean
           world_design: Json
         }
@@ -233,6 +234,7 @@ export type Database = {
           rewards_enabled?: boolean
           show_calendar?: boolean
           show_completed_tasks?: boolean
+          show_routines?: boolean
           show_support?: boolean
           world_design?: Json
         }
@@ -258,6 +260,7 @@ export type Database = {
           rewards_enabled?: boolean
           show_calendar?: boolean
           show_completed_tasks?: boolean
+          show_routines?: boolean
           show_support?: boolean
           world_design?: Json
         }
@@ -382,6 +385,78 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      ns_schedules: {
+        Row: {
+          anchor_date: string
+          archived: boolean
+          child_id: string | null
+          creator_id: string
+          end_date: string | null
+          end_time: string | null
+          household_id: string | null
+          id: string
+          kind: string
+          location: string
+          repeat_rule: string
+          revision: number
+          start_time: string | null
+          steps: Json
+          title: string
+          weekdays: number[]
+        }
+        Insert: {
+          anchor_date: string
+          archived?: boolean
+          child_id?: string | null
+          creator_id: string
+          end_date?: string | null
+          end_time?: string | null
+          household_id?: string | null
+          id?: string
+          kind: string
+          location?: string
+          repeat_rule: string
+          revision?: number
+          start_time?: string | null
+          steps?: Json
+          title: string
+          weekdays?: number[]
+        }
+        Update: {
+          anchor_date?: string
+          archived?: boolean
+          child_id?: string | null
+          creator_id?: string
+          end_date?: string | null
+          end_time?: string | null
+          household_id?: string | null
+          id?: string
+          kind?: string
+          location?: string
+          repeat_rule?: string
+          revision?: number
+          start_time?: string | null
+          steps?: Json
+          title?: string
+          weekdays?: number[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ns_schedules_child_id_fkey"
+            columns: ["child_id"]
+            isOneToOne: false
+            referencedRelation: "ns_children"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ns_schedules_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "ns_households"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ns_state: {
         Row: {
@@ -631,6 +706,18 @@ export type Database = {
           request?: string
           reward?: string
           title?: string
+        }
+        Returns: Json
+      }
+      ns_routine_action: {
+        Args: {
+          action?: string
+          expected_run?: number
+          expected_schedule?: number
+          later_time?: string
+          on_day?: string
+          schedule?: string
+          token?: string
         }
         Returns: Json
       }
