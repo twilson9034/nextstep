@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import {icloudUrl,readICloud,maxBytes} from '../supabase/functions/icloud-calendar/feed.ts';
+const u=icloudUrl('webcal://p123-caldav.icloud.com/published/2/Example_secret-123');
+assert.equal(u.href,'https://p123-caldav.icloud.com/published/2/Example_secret-123');
+for(const link of ['https://p123-caldav.icloud.com.evil.test/published/2/test','https://127.0.0.1/published/2/test','https://p123-caldav.icloud.com/private','http://p123-caldav.icloud.com/published/2/test','https://user:pass@p123-caldav.icloud.com/published/2/test','https://p123-caldav.icloud.com:8443/published/2/test'])assert.throws(()=>icloudUrl(link));
+const ics='BEGIN:VCALENDAR\r\nVERSION:2.0\r\nEND:VCALENDAR';
+let calls=0;
+assert.equal(await readICloud(u.href,async url=>{calls++;return calls===1?new Response(null,{status:302,headers:{location:'https://p124-caldav.icloud.com/published/2/Example_secret-123'}}):new Response(ics)}),ics);
+await assert.rejects(()=>readICloud(u.href,async()=>new Response(null,{status:302,headers:{location:'https://example.org/published/2/test'}})),/published calendar link/);
+await assert.rejects(()=>readICloud(u.href,async()=>new Response('<html>Sign in</html>')),/rather than a calendar/);
+await assert.rejects(()=>readICloud(u.href,async()=>new Response('x'.repeat(maxBytes+1))),/exceeds/);
+console.log('PASS: iCloud webcal conversion, Apple host and path restriction, safe redirects, HTML rejection, size limits');
